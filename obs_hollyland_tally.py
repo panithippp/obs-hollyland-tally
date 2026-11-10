@@ -284,6 +284,20 @@ class LightTest(threading.Thread):
             self.log("[Tally] %s กลับสู่ tally จริง" % ("ยกเลิกการทดสอบ —" if self.cancelled else "ทดสอบไฟเสร็จ —"))
 
 # ---------------- helpers (pure) ----------------
+def scenes_to_create(existing, n_lights, prefix="Camera"):
+    """Names of new scenes so the collection has at least n_lights scenes.
+    New scene k (1-based position in the list) is called "Camera k"; names that already exist are skipped.
+    Fresh OBS ["Scene"] with 4 lights -> ["Camera 2", "Camera 3", "Camera 4"]."""
+    names = set(existing)
+    out = []
+    k = len(existing) + 1
+    while len(existing) + len(out) < n_lights:
+        cand, i = "%s %d" % (prefix, k), k
+        while cand in names:
+            i += 1; cand = "%s %d" % (prefix, i)
+        names.add(cand); out.append(cand); k = i + 1
+    return out
+
 def effective_mapping(user_mapping, scene_names, n_lights, auto_map=True):
     """User choices win. If no light is set at all (fresh install) and auto_map is on,
     light 1..n follow the first n scenes in OBS scene order. Returns (mapping, is_auto)."""
@@ -414,7 +428,7 @@ def write_status(quit=False):
             _state["ips"] = [i for i in lan_ips()]; _state["ips_ts"] = time.time()
         d = {"ts": time.time(), "quit": quit, "connected": bool(_state.get("connected")),
              "presence": pres, "lights": lights, "ips": _state.get("ips", []),
-             "port": settings_cache.get("port", 8099), "auto": bool(settings_cache.get("auto"))}
+             "port": settings_cache.get("port", 8099), "auto": bool(settings_cache.get("auto")), "pid": os.getpid()}
         tmp = STATUS_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False)
         for _i in range(5):
@@ -521,6 +535,48 @@ def _on_test_btn(props, prop):
     start_test("ปุ่มทดสอบ"); _fill_dynamic(props)
     return True
 
+_load = {"t": 0.0, "busy": False, "done": set(), "ready": False}
+
+def ensure_scenes():
+    """Fresh OBS (only 'Scene'): create missing scenes so lights 1..n each have one.
+    Only when auto-map is on and the user has not chosen any light. Never deletes/renames.
+    Runs once per scene collection; checks names, so reloads never duplicate.
+    Call only from the OBS UI thread (frontend events, script_load, properties), never from the timer:
+    frontend calls from the timer thread can deadlock OBS."""
+    if obs is None or _load["busy"]:
+        return
+    try:
+        coll = obs.obs_frontend_get_current_scene_collection() or ""
+    except Exception:
+        coll = ""
+    if coll in _load["done"]:
+        return
+    n = settings_cache["n_lights"]
+    um = settings_cache["user_mapping"]
+    if not settings_cache["auto_map"] or any(um.get(ch) for ch in range(1, n + 1)):
+        _load["done"].add(coll); return
+    existing = _scene_names()
+    if not existing:
+        return            # collection not loaded yet, try again next tick
+    _load["done"].add(coll)
+    new = scenes_to_create(existing, n)
+    if not new:
+        return
+    # OBS inserts a new scene right below the current one, so create them last-first:
+    # a fresh OBS then lists Scene, Camera 2, Camera 3, Camera 4 (= lights 1-4)
+    for name in reversed(new):
+        src = obs.obs_get_source_by_name(name)
+        if src:                                   # a source with that name exists already: do not touch it
+            obs.obs_source_release(src); continue
+        sc = obs.obs_scene_create(name)
+        if sc: obs.obs_scene_release(sc)          # the OBS scene list keeps its own reference
+    print("[Tally] OBS นี้ยังมี Scene ไม่ครบ %d ไฟ — สร้าง Scene ใหม่ (created scenes): %s" % (n, ", ".join(new)))
+    try:
+        obs.obs_frontend_save()                   # write the scene collection so the new scenes persist
+    except Exception as e:
+        print("[Tally] save error: %s" % e)
+    refresh()
+
 def tick():
     refresh()
     check_presence()
@@ -529,6 +585,12 @@ def tick():
         if settings_cache.get('show_window', True): open_window()
 
 def _on_event(ev):
+    if ev == getattr(obs, "OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING", -1):
+        _load["busy"] = True; return
+    if ev in (getattr(obs, "OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED", -1), getattr(obs, "OBS_FRONTEND_EVENT_FINISHED_LOADING", -1)):
+        _load["busy"] = False; _load["t"] = time.time()
+        if ev == getattr(obs, "OBS_FRONTEND_EVENT_FINISHED_LOADING", -1): _load["ready"] = True
+        if _load.get("ready"): ensure_scenes()
     if ev in (obs.OBS_FRONTEND_EVENT_SCENE_CHANGED, obs.OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED,
               obs.OBS_FRONTEND_EVENT_STUDIO_MODE_ENABLED, obs.OBS_FRONTEND_EVENT_STUDIO_MODE_DISABLED,
               obs.OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED):
@@ -586,6 +648,7 @@ def script_defaults(s):
     obs.obs_data_set_default_bool(s, "auto_map", True)
 
 def script_properties():
+    if _load.get("ready"): ensure_scenes()
     p = obs.obs_properties_create()
     obs.obs_properties_add_text(p, "h1", "<b>① จับคู่ไฟกับกล้อง (Map lights)</b>", obs.OBS_TEXT_INFO)
     obs.obs_properties_add_bool(p, "auto_map", "ถ้ายังไม่ได้เลือก ให้ไฟ 1,2,3... ตาม Scene แรกๆ อัตโนมัติ (Auto-map to first scenes)")
@@ -644,6 +707,12 @@ def script_update(s):
     refresh(); check_presence(force=True)
 
 def script_load(s):
+    _load["t"] = time.time(); _load["busy"] = False; _load["done"] = set()
+    # script added while OBS is already up (Tools > Scripts): a current scene exists, so it is safe now.
+    # At OBS startup there is no current scene yet; FINISHED_LOADING handles that case.
+    cur = obs.obs_frontend_get_current_scene()
+    if cur:
+        obs.obs_source_release(cur); _load["ready"] = True; ensure_scenes()
     obs.obs_frontend_add_event_callback(_on_event)
     obs.timer_add(tick, 250)
 

@@ -26,10 +26,13 @@ The installer does everything by itself, no admin needed:
 
 Out of the box, **lights 1, 2, 3, 4 follow your first 4 OBS scenes** (scene list order). To choose yourself: **Tools → Scripts → obs_hollyland_tally.py** and pick a scene/source per light; your choice always wins.
 
+**New OBS with fewer scenes than lights?** (a fresh OBS has only "Scene") The script then creates the missing scenes once, named **Camera 2, Camera 3, Camera 4** (so a fresh OBS ends up with Scene, Camera 2, Camera 3, Camera 4 = lights 1–4), and saves them. It never deletes or renames scenes, skips names that already exist, and does nothing if you have chosen any light yourself or turned auto-map off. Put each camera into its scene and you're ready.
+
 ### ติดตั้ง (ภาษาไทย)
 1. กด **Code → Download ZIP** แล้วคลิกขวาที่ไฟล์ ZIP → **Extract All**
 2. ดับเบิลคลิก **`Install Hollyland Tally.bat`** จบแค่นี้ ตัวติดตั้งหา OBS/Python เอง ถ้าไม่มี Python จะโหลด Python 3.11 จาก python.org มาติดตั้งให้ ตั้งค่า Python ใน OBS เพิ่มสคริปต์ เช็กไฟร์วอลล์ แล้วเปิด OBS ให้ ตอนจบจะบอก IP ของเครื่องนี้ไว้ใส่เป็น Switcher IP ที่ตัวฐาน
 3. ตอนแรกไฟ 1–4 จะตาม Scene 4 อันแรกใน OBS อัตโนมัติ เปลี่ยนเองได้ที่ Tools → Scripts
+4. ถ้าเพิ่งลง OBS ใหม่และยังมี Scene ไม่ถึง 4 อัน (OBS ใหม่มีแค่ "Scene") สคริปต์จะสร้าง Scene ที่ขาดให้เองครั้งเดียว ชื่อ **Camera 2, Camera 3, Camera 4** แล้วบันทึกไว้ ไม่ลบหรือเปลี่ยนชื่อ Scene เดิม และจะไม่สร้างถ้าคุณเลือกไฟเองแล้วหรือปิด auto-map ไว้ จากนั้นใส่กล้องลงในแต่ละ Scene ได้เลย
 
 ### Uninstall
 Double-click **`Uninstall Hollyland Tally.bat`**: removes the script from all scene collections and deletes its files (Python and the OBS Python setting are left alone).

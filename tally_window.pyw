@@ -76,6 +76,7 @@ note = tk.Label(root, text="", font=small, bg="#111111", fg="#9e9e9e", anchor="w
 note.pack(fill="x", padx=14, pady=(0, 10))
 rows = []
 quit_at = [None]
+owner = [None]   # pid of the OBS that started this window
 
 def get():
     try:
@@ -92,6 +93,9 @@ def tick():
         if now - quit_at[0] > 6: root.destroy(); return
         root.after(1000, tick); return
     quit_at[0] = None
+    if d.get("pid"):
+        if owner[0] is None: owner[0] = d["pid"]
+        elif d["pid"] != owner[0]: root.destroy(); return   # OBS was restarted: its new window takes over
     conn = d.get("connected")
     pres = d.get("presence", "")
     conn_ips.clear(); conn_ips.update(re.findall(r"\d+\.\d+\.\d+\.\d+", pres))
@@ -138,7 +142,8 @@ def tick():
     if not lights:
         note.config(text="No light is mapped yet: open OBS > Tools > Scripts > obs_hollyland_tally.py and pick a scene for each light.")
     elif d.get("auto"):
-        note.config(text="AUTO: lights follow the first scenes in OBS order. To choose yourself: OBS > Tools > Scripts > obs_hollyland_tally.py")
+        note.config(text="AUTO: lights follow the first scenes in OBS order (on a new OBS, missing scenes \"Camera 2\", \"Camera 3\"... are created).\n"
+                         "To choose yourself: OBS > Tools > Scripts > obs_hollyland_tally.py")
     else:
         note.config(text="")
     root.after(100, tick)
