@@ -15,3 +15,15 @@ for f in glob.glob(os.path.join(appdata, "obs-studio", "basic", "scenes", "*.jso
         print("added to", os.path.basename(f))
     else:
         print("already in", os.path.basename(f))
+
+# verify
+ok = 0
+for f in glob.glob(os.path.join(appdata, "obs-studio", "basic", "scenes", "*.json")):
+    try:
+        with open(f, "r", encoding="utf-8") as fh: d = json.load(fh)
+        if any(os.path.basename(x.get("path", "")) == "obs_hollyland_tally.py" for x in d.get("modules", {}).get("scripts-tool", [])):
+            ok += 1
+    except Exception:
+        pass
+print("Script added to OBS: %s (%d scene collection(s))" % ("OK" if ok else "FAILED", ok))
+sys.exit(0 if ok else 1)

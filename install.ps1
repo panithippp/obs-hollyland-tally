@@ -39,6 +39,7 @@ Set-ObsPython "$obsDir\user.ini"
 if (Test-Path "$obsDir\global.ini") { Set-ObsPython "$obsDir\global.ini" }
 # add script to OBS Tools > Scripts
 & "$py\python.exe" "$here\add_to_obs.py"
+if ($LASTEXITCODE -ne 0) { Write-Host "Could not add the script to OBS. Open OBS once, close it, then run this installer again." -ForegroundColor Red; Read-Host "Press Enter to exit"; exit 1 }
 Write-Host "`nDone. Open OBS: the tally script loads by itself and the status window opens automatically." -ForegroundColor Green
 Write-Host "Set the Hollyland base 'Switcher IP' to this PC's IP, port 8099."
 Read-Host "Press Enter to close"
