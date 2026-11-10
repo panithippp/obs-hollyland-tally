@@ -371,7 +371,7 @@ def guide_html(ips, port, mapping, n_lights):
 # ---------------- OBS glue ----------------
 server = None
 settings_cache = {"auto_test": True, "port": 8099, "n_inputs": 16, "n_lights": 4, "use_preview": True,
-                  "mapping": {}, "user_mapping": {}, "auto_map": True, "auto": False}
+                  "mapping": {}, "user_mapping": {}, "auto_map": True, "auto": False, "win_scale": 100}
 _state = {"last_check": 0.0, "connected": None, "presence": "", "props": None}
 CHECK_EVERY = 60
 
@@ -411,7 +411,29 @@ def _cur(getter):
 
 
 STATUS_FILE = os.path.join(tempfile.gettempdir(), "obs_hollyland_tally_status.json")
-_win = {"proc": None, "last": 0}
+CLOSED_FILE = os.path.join(tempfile.gettempdir(), "obs_hollyland_tally_closed.json")  # status window closed by the user
+_win = {"proc": None, "last": 0, "sid": "%d-%d" % (os.getpid(), int(time.time() * 1000))}
+
+def user_closed_window(path=None, pid=None, sid=None):
+    """True if the user closed the status window (X) in this OBS process / script load:
+    then the script must not reopen it until "Open status window" is pressed."""
+    path = path or CLOSED_FILE
+    pid = os.getpid() if pid is None else pid
+    sid = _win["sid"] if sid is None else sid
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            d = json.load(f)
+    except Exception:
+        return False
+    if d.get("pid") not in (None, pid):
+        return False                      # flag from an earlier OBS run
+    if d.get("sid") and d.get("sid") != sid:
+        return False                      # flag from before the script was reloaded
+    return True
+
+def clear_user_closed(path=None):
+    try: os.remove(path or CLOSED_FILE)
+    except Exception: pass
 
 def write_status(quit=False):
     try:
@@ -428,7 +450,8 @@ def write_status(quit=False):
             _state["ips"] = [i for i in lan_ips()]; _state["ips_ts"] = time.time()
         d = {"ts": time.time(), "quit": quit, "connected": bool(_state.get("connected")),
              "presence": pres, "lights": lights, "ips": _state.get("ips", []),
-             "port": settings_cache.get("port", 8099), "auto": bool(settings_cache.get("auto")), "pid": os.getpid()}
+             "port": settings_cache.get("port", 8099), "auto": bool(settings_cache.get("auto")), "pid": os.getpid(),
+             "sid": _win["sid"], "scale": int(settings_cache.get("win_scale", 100))}
         tmp = STATUS_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False)
         for _i in range(5):
@@ -582,7 +605,7 @@ def tick():
     check_presence()
     if time.time() - _win['last'] > 1:
         _win['last'] = time.time(); write_status()
-        if settings_cache.get('show_window', True): open_window()
+        if settings_cache.get('show_window', True) and not user_closed_window(): open_window()
 
 def _on_event(ev):
     if ev == getattr(obs, "OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING", -1):
@@ -624,6 +647,11 @@ def _fill_dynamic(props):
                                          settings_cache["mapping"], settings_cache["n_lights"]))
         obs.obs_property_set_visible(g, has_map)
 
+def _on_open_window_btn(props, prop):
+    clear_user_closed()
+    open_window()
+    return False
+
 def _on_refresh_btn(props, prop):
     refresh(); check_presence(force=True); _fill_dynamic(props)
     return True
@@ -646,6 +674,7 @@ def script_defaults(s):
     obs.obs_data_set_default_bool(s, "use_preview", True)
     obs.obs_data_set_default_bool(s, "auto_test", True)
     obs.obs_data_set_default_bool(s, "auto_map", True)
+    obs.obs_data_set_default_int(s, "win_scale", 100)
 
 def script_properties():
     if _load.get("ready"): ensure_scenes()
@@ -676,6 +705,13 @@ def script_properties():
     obs.obs_properties_add_text(p, "h2", "<b>② สถานะ (Status)</b>", obs.OBS_TEXT_INFO)
     obs.obs_properties_add_text(p, "status", "", obs.OBS_TEXT_INFO)
     obs.obs_properties_add_button(p, "refresh_btn", "🔄 รีเฟรชสถานะ (Refresh)", _on_refresh_btn)
+    obs.obs_properties_add_text(p, "h3", "<b>③ หน้าต่างสถานะ (Status window)</b>", obs.OBS_TEXT_INFO)
+    obs.obs_properties_add_int_slider(p, "win_scale", "ขนาดตัวอักษร % (Status window text size)", 50, 300, 10)
+    obs.obs_properties_add_button(p, "open_win_btn", "🪟 เปิดหน้าต่างสถานะ (Open status window)", _on_open_window_btn)
+    obs.obs_properties_add_text(p, "win_info", "ลากขอบหน้าต่างเพื่อย่อ/ขยาย ตัวอักษรปรับตามอัตโนมัติ · ปุ่ม A- / A+ หรือคีย์ + / - ในหน้าต่าง · "
+                                "กด X ปิดแล้วจะไม่เด้งขึ้นมาอีก จนกว่าจะกดปุ่มเปิดด้านบน<br>"
+                                "(Drag the frame to resize; text follows. A-/A+ or +/- keys in the window. "
+                                "X keeps it closed until you press Open.)", obs.OBS_TEXT_INFO)
     adv = obs.obs_properties_create()
     obs.obs_properties_add_int(adv, "port", "Port (vMix = 8099)", 1, 65535, 1)
     obs.obs_properties_add_int(adv, "n_inputs", "จำนวน input ที่รายงาน (Inputs reported)", 1, MAX_CH, 1)
@@ -692,6 +728,7 @@ def script_update(s):
     settings_cache["use_preview"] = obs.obs_data_get_bool(s, "use_preview")
     settings_cache["auto_test"] = obs.obs_data_get_bool(s, "auto_test")
     settings_cache["auto_map"] = obs.obs_data_get_bool(s, "auto_map")
+    settings_cache["win_scale"] = max(50, min(300, obs.obs_data_get_int(s, "win_scale") or 100))
     settings_cache["user_mapping"] = {ch: (obs.obs_data_get_string(s, "ch%d" % ch) if ch <= settings_cache["n_lights"] else "")
                                       for ch in range(1, MAX_CH + 1)}
     settings_cache["mapping"] = dict(settings_cache["user_mapping"])
@@ -705,9 +742,11 @@ def script_update(s):
         except OSError as e:
             print("[Tally] เปิด port %d ไม่ได้: %s" % (port, e)); server = None
     refresh(); check_presence(force=True)
+    write_status()   # text size etc. reach the status window at once
 
 def script_load(s):
     _load["t"] = time.time(); _load["busy"] = False; _load["done"] = set()
+    clear_user_closed()   # OBS start / script reload: show the status window again
     # script added while OBS is already up (Tools > Scripts): a current scene exists, so it is safe now.
     # At OBS startup there is no current scene yet; FINISHED_LOADING handles that case.
     cur = obs.obs_frontend_get_current_scene()

@@ -54,8 +54,9 @@ try {
     $t = Join-Path $obsDir "scripts\$f"
     if (Test-Path -LiteralPath $t) { Remove-Item -LiteralPath $t -Force; Say "Deleted $t" }
   }
+  Remove-Item -LiteralPath (Join-Path $env:USERPROFILE ".hollyland_tally_window.json") -Force -ErrorAction SilentlyContinue
   Remove-Item -Path (Join-Path $obsDir "scripts\__pycache__\obs_hollyland_tally*.pyc") -Force -ErrorAction SilentlyContinue
-  foreach ($f in @("obs_hollyland_tally_status.json", "obs_hollyland_tally_status.json.tmp")) { Remove-Item -LiteralPath (Join-Path $env:TEMP $f) -Force -ErrorAction SilentlyContinue }
+  foreach ($f in @("obs_hollyland_tally_status.json", "obs_hollyland_tally_status.json.tmp", "obs_hollyland_tally_closed.json")) { Remove-Item -LiteralPath (Join-Path $env:TEMP $f) -Force -ErrorAction SilentlyContinue }
 
   $rule = Get-NetFirewallRule -DisplayName "Hollyland Tally (OBS TCP $PORT)" -ErrorAction SilentlyContinue
   if ($rule) {

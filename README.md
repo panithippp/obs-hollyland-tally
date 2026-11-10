@@ -8,6 +8,8 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 - Red = Program, Green = Preview (Studio Mode), real-time.
 - Map each tally light (1–16) to an OBS scene or source (auto-mapped to the first scenes until you choose).
 - Status window opens automatically when the script loads (no terminal): big colored rows per light, this PC's IP, connection state.
+- Status window can be resized freely (drag the frame): the colour bars and all text scale with it. Text size: **A- / A+** in the window, keys **+ / -** (**0** = 100 %), or OBS → Tools → Scripts → *Status window text size*. Size, position and text size are remembered (`~/.hollyland_tally_window.json`).
+- Closing the status window (X) keeps it closed. To show it again: OBS → Tools → Scripts → **Open status window** (it also comes back when OBS restarts or the script is reloaded). If the window crashes, the script reopens it.
 - Auto-scans the network for the tally base and tells you what to set if it is found but not connected.
 - One-click Windows installer.
 
@@ -41,6 +43,11 @@ Double-click **`Uninstall Hollyland Tally.bat`**: removes the script from all sc
 - *"install.ps1 was not found"*: you ran the .bat from inside the ZIP. Extract the ZIP first.
 - The window says the tally device is found but not connected: on the base set **Switcher IP = this PC's IP** (shown in the window), not the base's own IP.
 - Anything else: send `%TEMP%\hollyland_tally_install.log`.
+
+## หน้าต่างสถานะ (Status window) — ภาษาไทย
+- ลากขอบหน้าต่างเพื่อย่อ/ขยาย แถบสีและตัวอักษรจะปรับขนาดตามอัตโนมัติ
+- ปรับขนาดตัวอักษร: ปุ่ม **A- / A+** ในหน้าต่าง, คีย์ **+ / -** (**0** = 100%) หรือ OBS → Tools → Scripts → *ขนาดตัวอักษร % (Status window text size)* — จำขนาด/ตำแหน่งหน้าต่างไว้ให้ครั้งต่อไป
+- กด X ปิดแล้วจะไม่เด้งขึ้นมาอีก ถ้าต้องการเปิดใหม่: OBS → Tools → Scripts → **🪟 เปิดหน้าต่างสถานะ (Open status window)** (เปิด OBS ใหม่ หรือ reload สคริปต์ ก็จะกลับมาเอง)
 
 ## Set up the tally base
 On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the computer running OBS** (shown in the status window), **port 8099**. Do not enter the base's own IP. Both must be on the same network.
