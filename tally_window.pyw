@@ -127,8 +127,10 @@ def do_scan(ips):
                 try: udp.sendto(b"x", ("%s.%d" % (pre, i), 9))
                 except Exception: pass
         time.sleep(2.0)
-        out = subprocess.run(["arp", "-a"] if os.name == "nt" else ["arp", "-an"], capture_output=True, text=True,
-                             timeout=10, creationflags=NOWIN).stdout
+        kw = dict(capture_output=True, text=True, timeout=10)
+        if os.name == "nt":
+            kw["creationflags"] = NOWIN
+        out = subprocess.run(["arp", "-a"] if os.name == "nt" else ["arp", "-an"], **kw).stdout
         found = []
         ouis = load_ouis()
         for ip, mac in re.findall(r"(\d+\.\d+\.\d+\.\d+)\)?\s+(?:at\s+)?([0-9a-fA-F]{1,2}(?:[-:][0-9a-fA-F]{1,2}){5})", out):

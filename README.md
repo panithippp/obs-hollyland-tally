@@ -53,7 +53,15 @@ Double-click **`Uninstall Hollyland Tally.bat`**: removes the script from all sc
 On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the computer running OBS** (shown in the status window), **port 8099**. Do not enter the base's own IP. Both must be on the same network.
 
 ## macOS
-Copy `obs_hollyland_tally.py` and `tally_window.pyw` into the same folder, set OBS → Tools → Scripts → Python Settings to a Python 3.11 install, then add the script.
+Copy `obs_hollyland_tally.py` and `tally_window.pyw` into the same folder (`~/Library/Application Support/obs-studio/scripts/` works), set OBS → Tools → Scripts → Python Settings to a Python 3.11 install, then add the script.
+
+The status window needs a Python with **Tk 8.6 or newer**. Apple's Command Line Tools Python (Tk 8.5) can import tkinter, but on current macOS it opens a **blank white window**. Install Homebrew Tk and the script will find it automatically:
+
+```
+brew install python-tk@3.14
+```
+
+(ติดตั้ง `python-tk@3.14` ด้วย Homebrew — Python ของระบบเป็น Tk 8.5 จะเปิดหน้าต่างสถานะเป็นจอขาวว่าง)
 
 ## How it works (protocol notes)
 The Hollyland base does **not** send `SUBSCRIBE TALLY`. It polls about once per second with:

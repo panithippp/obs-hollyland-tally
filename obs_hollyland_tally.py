@@ -403,11 +403,22 @@ def _scene_tree():
     return tree
 
 def _cur(getter):
-    s = getter()
-    if not s: return None
-    n = obs.obs_source_get_name(s)
-    obs.obs_source_release(s)
-    return n
+    # On macOS, SWIG can raise "failed to convert obs_source_t *" when the
+    # frontend returns NULL (no current/preview scene yet). Catch that so a
+    # refresh does not abort, and still release a real source when we get one.
+    try:
+        s = getter()
+    except Exception:
+        return None
+    if not s:
+        return None
+    try:
+        return obs.obs_source_get_name(s)
+    finally:
+        try:
+            obs.obs_source_release(s)
+        except Exception:
+            pass
 
 
 STATUS_FILE = os.path.join(tempfile.gettempdir(), "obs_hollyland_tally_status.json")
@@ -464,13 +475,71 @@ def write_status(quit=False):
     except Exception as e:
         print("[Tally] write_status error: %s" % e)
 
+def _python_with_tk():
+    """Python that can import tkinter and actually paint a window.
+
+    On macOS the system / Command Line Tools Python has Tk 8.5, which often
+    opens a blank white window (Aqua no longer paints Tk 8.5 widgets). Homebrew
+    `python-tk` (Tk 8.6 or 9) works. Prefer that, and skip Tk 8.5 when a newer
+    one is available.
+    """
+    if getattr(_python_with_tk, "_cached", None):
+        return _python_with_tk._cached
+    import shutil
+    cands = []
+    for pth in (
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/opt/homebrew/bin/python3.14",
+        "/opt/homebrew/opt/python@3.13/bin/python3.13",
+        "/opt/homebrew/bin/python3.13",
+        "/opt/homebrew/opt/python@3.12/bin/python3.12",
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/usr/local/opt/python@3.14/bin/python3.14",
+        "/usr/local/bin/python3.14",
+        shutil.which("python3.14"),
+        shutil.which("python3"),
+        shutil.which("python"),
+        getattr(sys, "executable", None),
+        "/opt/homebrew/bin/python3",
+        "/usr/local/bin/python3",
+        "/usr/bin/python3",
+    ):
+        if pth and os.path.isfile(pth) and os.access(pth, os.X_OK) and pth not in cands:
+            cands.append(pth)
+    scored = []  # (path, tk_version) in candidate order
+    for py in cands:
+        try:
+            r = subprocess.run([py, "-c", "import tkinter, _tkinter; print(tkinter.TkVersion)"],
+                               capture_output=True, text=True, timeout=5)
+            if r.returncode == 0:
+                try:
+                    ver = float((r.stdout or "0").strip().split()[0])
+                except Exception:
+                    ver = 0.0
+                scored.append((py, ver))
+        except Exception:
+            continue
+    # macOS Tk 8.5: import works, but the window stays blank. Use 8.6+ if we can.
+    if sys.platform == "darwin":
+        good = [(py, ver) for py, ver in scored if ver >= 8.6]
+        if good:
+            scored = good
+    if not scored:
+        return None
+    py, ver = scored[0]
+    _python_with_tk._cached = py
+    _python_with_tk._tkver = ver
+    return py
+
+
 def open_window():
     p = _win["proc"]
     if p is not None and p.poll() is None: return
     try:
         here = os.path.dirname(os.path.abspath(__file__))
         win = os.path.join(here, "tally_window.pyw")
-        if not os.path.exists(win): return
+        if not os.path.exists(win):
+            print("[Tally] ไม่พบ tally_window.pyw เปิดหน้าต่างสถานะไม่ได้"); return
         write_status()
         if os.name == "nt":
             pyw = None
@@ -482,9 +551,13 @@ def open_window():
             if pyw is None: print("[Tally] ไม่พบ pythonw.exe เปิดหน้าต่างสถานะไม่ได้"); return
             _win["proc"] = subprocess.Popen([pyw, win], creationflags=0x08000000)
         else:
-            import shutil
-            py = shutil.which("python3") or "/usr/bin/python3"
-            _win["proc"] = subprocess.Popen([py, win])
+            py = _python_with_tk()
+            if py is None:
+                print("[Tally] ไม่พบ Python ที่ใช้ tkinter ได้ เปิดหน้าต่างสถานะไม่ได้ "
+                      "(on macOS: brew install python-tk@3.14  — system Tk 8.5 opens a blank window)")
+                return
+            print("[Tally] หน้าต่างสถานะใช้ %s (Tk %s)" % (py, getattr(_python_with_tk, "_tkver", "?")))
+            _win["proc"] = subprocess.Popen([py, win], start_new_session=True)
     except Exception as e:
         print("[Tally] เปิดหน้าต่างสถานะไม่ได้: %s" % e)
 
@@ -749,9 +822,17 @@ def script_load(s):
     clear_user_closed()   # OBS start / script reload: show the status window again
     # script added while OBS is already up (Tools > Scripts): a current scene exists, so it is safe now.
     # At OBS startup there is no current scene yet; FINISHED_LOADING handles that case.
-    cur = obs.obs_frontend_get_current_scene()
+    cur = None
+    try:
+        cur = obs.obs_frontend_get_current_scene()
+    except Exception:
+        cur = None
     if cur:
-        obs.obs_source_release(cur); _load["ready"] = True; ensure_scenes()
+        try:
+            obs.obs_source_release(cur)
+        except Exception:
+            pass
+        _load["ready"] = True; ensure_scenes()
     obs.obs_frontend_add_event_callback(_on_event)
     obs.timer_add(tick, 250)
 
