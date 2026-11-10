@@ -27,9 +27,11 @@ Copy-Item "$here\obs_hollyland_tally.py" $dest -Force
 Copy-Item "$here\tally_window.pyw" $dest -Force
 # tell OBS where Python is ([Python] Path64bit in user.ini, older OBS: global.ini)
 $pyPath = $py -replace '\\','/'
-function Set-ObsPython($ini) {
-  $lines = if (Test-Path $ini) { [System.Collections.Generic.List[string]]@(Get-Content $ini) } else { New-Object System.Collections.Generic.List[string] }
+function Set-ObsPython($ini, [bool]$onlyIfPresent = $false) {
+  $lines = New-Object System.Collections.Generic.List[string]
+  if (Test-Path $ini) { foreach ($l in @(Get-Content $ini)) { $lines.Add([string]$l) } }
   $start = $lines.IndexOf("[Python]")
+  if ($start -lt 0 -and $onlyIfPresent) { return }
   if ($start -lt 0) { $lines.Add(""); $lines.Add("[Python]"); $lines.Add("Path64bit=$pyPath") }
   else {
     $end = $lines.Count
@@ -44,7 +46,7 @@ function Set-ObsPython($ini) {
 $obsDir = "$env:APPDATA\obs-studio"
 New-Item -ItemType Directory -Force $obsDir | Out-Null
 Set-ObsPython "$obsDir\user.ini"
-if (Test-Path "$obsDir\global.ini") { Set-ObsPython "$obsDir\global.ini" }
+if (Test-Path "$obsDir\global.ini") { Set-ObsPython "$obsDir\global.ini" $true }
 # add script to OBS Tools > Scripts
 & "$py\python.exe" "$here\add_to_obs.py"
 if ($LASTEXITCODE -ne 0) { Write-Host "Could not add the script to OBS. Open OBS once, close it, then run this installer again." -ForegroundColor Red; Read-Host "Press Enter to exit"; exit 1 }
