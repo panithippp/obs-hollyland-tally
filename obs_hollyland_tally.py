@@ -284,6 +284,16 @@ class LightTest(threading.Thread):
             self.log("[Tally] %s กลับสู่ tally จริง" % ("ยกเลิกการทดสอบ —" if self.cancelled else "ทดสอบไฟเสร็จ —"))
 
 # ---------------- helpers (pure) ----------------
+def effective_mapping(user_mapping, scene_names, n_lights, auto_map=True):
+    """User choices win. If no light is set at all (fresh install) and auto_map is on,
+    light 1..n follow the first n scenes in OBS scene order. Returns (mapping, is_auto)."""
+    if any(user_mapping.get(ch) for ch in range(1, n_lights + 1)) or not auto_map:
+        return dict(user_mapping), False
+    m = {ch: "" for ch in range(1, MAX_CH + 1)}
+    for ch, name in enumerate(scene_names[:n_lights], 1):
+        m[ch] = "Scene:" + name
+    return m, any(m.values())
+
 COLOR_TH = {"0": "ดับ (off)", "1": "แดง (Program)", "2": "เขียว (Preview)"}
 
 def lan_ips():
@@ -346,7 +356,8 @@ def guide_html(ips, port, mapping, n_lights):
 
 # ---------------- OBS glue ----------------
 server = None
-settings_cache = {"auto_test": True, "port": 8099, "n_inputs": 16, "n_lights": 4, "use_preview": True, "mapping": {}}
+settings_cache = {"auto_test": True, "port": 8099, "n_inputs": 16, "n_lights": 4, "use_preview": True,
+                  "mapping": {}, "user_mapping": {}, "auto_map": True, "auto": False}
 _state = {"last_check": 0.0, "connected": None, "presence": "", "props": None}
 CHECK_EVERY = 60
 
@@ -403,7 +414,7 @@ def write_status(quit=False):
             _state["ips"] = [i for i in lan_ips()]; _state["ips_ts"] = time.time()
         d = {"ts": time.time(), "quit": quit, "connected": bool(_state.get("connected")),
              "presence": pres, "lights": lights, "ips": _state.get("ips", []),
-             "port": settings_cache.get("port", 8099)}
+             "port": settings_cache.get("port", 8099), "auto": bool(settings_cache.get("auto"))}
         tmp = STATUS_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False)
         for _i in range(5):
@@ -440,8 +451,26 @@ def open_window():
     except Exception as e:
         print("[Tally] เปิดหน้าต่างสถานะไม่ได้: %s" % e)
 
+def _scene_names():
+    scenes = obs.obs_frontend_get_scenes() or []
+    names = [obs.obs_source_get_name(sc) for sc in scenes]
+    obs.source_list_release(scenes)
+    return names
+
+def update_mapping():
+    m, auto = effective_mapping(settings_cache["user_mapping"], _scene_names(),
+                                settings_cache["n_lights"], settings_cache["auto_map"])
+    if auto != settings_cache["auto"] or (auto and m != settings_cache["mapping"]):
+        if auto:
+            print("[Tally] ยังไม่ได้ตั้งไฟ ใช้ค่าอัตโนมัติ (auto-map): " + ", ".join(
+                "%d=%s" % (c, m[c][6:]) for c in range(1, MAX_CH + 1) if m.get(c)))
+        else:
+            print("[Tally] ใช้การตั้งไฟของผู้ใช้ (user mapping)")
+    settings_cache["mapping"], settings_cache["auto"] = m, auto
+
 def refresh():
     if server is None or obs is None: return
+    update_mapping()
     prog = _cur(obs.obs_frontend_get_current_scene)
     prev = None
     if settings_cache["use_preview"] and obs.obs_frontend_preview_program_mode_active():
@@ -516,6 +545,14 @@ def _status_html():
                channel_status_text(t, settings_cache["mapping"], settings_cache["n_lights"])))
 
 def _fill_dynamic(props):
+    a = obs.obs_properties_get(props, "automap_info")
+    if a:
+        if obs is not None and server is not None: update_mapping()
+        m = settings_cache["mapping"]
+        obs.obs_property_set_description(a, "🔁 <b>ตอนนี้ใช้ค่าอัตโนมัติ (auto):</b> " + ", ".join(
+            "ไฟ %d → %s" % (c, m[c][6:]) for c in range(1, settings_cache["n_lights"] + 1) if m.get(c))
+            + "<br>เลือกไฟด้านล่างเองเมื่อไหร่ ค่าที่เลือกจะใช้แทน (your choices override)")
+        obs.obs_property_set_visible(a, bool(settings_cache.get("auto")))
     p = obs.obs_properties_get(props, "status")
     if p: obs.obs_property_set_long_description(p, _status_html()); obs.obs_property_set_description(p, _status_html())
     g = obs.obs_properties_get(props, "guide")
@@ -546,10 +583,13 @@ def script_defaults(s):
     obs.obs_data_set_default_int(s, "n_lights", 4)
     obs.obs_data_set_default_bool(s, "use_preview", True)
     obs.obs_data_set_default_bool(s, "auto_test", True)
+    obs.obs_data_set_default_bool(s, "auto_map", True)
 
 def script_properties():
     p = obs.obs_properties_create()
     obs.obs_properties_add_text(p, "h1", "<b>① จับคู่ไฟกับกล้อง (Map lights)</b>", obs.OBS_TEXT_INFO)
+    obs.obs_properties_add_bool(p, "auto_map", "ถ้ายังไม่ได้เลือก ให้ไฟ 1,2,3... ตาม Scene แรกๆ อัตโนมัติ (Auto-map to first scenes)")
+    obs.obs_properties_add_text(p, "automap_info", "", obs.OBS_TEXT_INFO)
     nl = obs.obs_properties_add_int_slider(p, "n_lights", "จำนวนไฟที่ใช้ (Lights)", 1, MAX_CH, 1)
     obs.obs_property_set_modified_callback(nl, _on_nlights)
     names_sc, names_src = [], []
@@ -588,8 +628,10 @@ def script_update(s):
     settings_cache["n_lights"] = obs.obs_data_get_int(s, "n_lights")
     settings_cache["use_preview"] = obs.obs_data_get_bool(s, "use_preview")
     settings_cache["auto_test"] = obs.obs_data_get_bool(s, "auto_test")
-    settings_cache["mapping"] = {ch: (obs.obs_data_get_string(s, "ch%d" % ch) if ch <= settings_cache["n_lights"] else "")
-                                 for ch in range(1, MAX_CH + 1)}
+    settings_cache["auto_map"] = obs.obs_data_get_bool(s, "auto_map")
+    settings_cache["user_mapping"] = {ch: (obs.obs_data_get_string(s, "ch%d" % ch) if ch <= settings_cache["n_lights"] else "")
+                                      for ch in range(1, MAX_CH + 1)}
+    settings_cache["mapping"] = dict(settings_cache["user_mapping"])
     if server is None or server.port != port:
         if server: server.stop()
         server = TallyServer(port)

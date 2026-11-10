@@ -6,17 +6,38 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 
 ## Features
 - Red = Program, Green = Preview (Studio Mode), real-time.
-- Map each tally light (1–16) to an OBS scene or source.
+- Map each tally light (1–16) to an OBS scene or source (auto-mapped to the first scenes until you choose).
 - Status window opens automatically when the script loads (no terminal): big colored rows per light, this PC's IP, connection state.
 - Auto-scans the network for the tally base and tells you what to set if it is found but not connected.
 - One-click Windows installer.
 
 ## Install (Windows)
-1. Install **Python 3.11 64-bit** from python.org (keep "tcl/tk" ticked).
-2. Download this repo (Code → Download ZIP) and extract it.
-3. **Close OBS**, then double-click `Install Hollyland Tally.bat`.
-4. Open OBS. The script loads by itself and the status window appears.
-5. In **Tools → Scripts → obs_hollyland_tally.py**, pick which scene/source each light number follows.
+1. On GitHub: **Code → Download ZIP**. Right click the ZIP → **Extract All**.
+2. Double-click **`Install Hollyland Tally.bat`** in the extracted folder. That's all.
+
+The installer does everything by itself, no admin needed:
+- Finds OBS Studio (registry or the usual folders). If OBS is not installed it tells you.
+- Finds a 64-bit Python that OBS can use (3.11 preferred, 3.12/3.10 OK; 3.13+ is not supported by OBS) via the registry, `py -0p` and the usual folders. If there is none, it downloads **Python 3.11.9 from python.org**, checks its signature and installs it for your user only (with tkinter for the status window). Falls back to `winget`.
+- Closes OBS if it is open (and opens it again at the end). If OBS was never started on this PC, it starts it once so OBS creates its settings, then closes it.
+- Copies the script, sets **Tools → Scripts → Python Settings** for you (`[Python] Path64bit` in `user.ini`, and `global.ini` for older OBS), and adds the script to **every scene collection**. Light settings you already made are kept.
+- Checks Windows Firewall for incoming TCP **8099** to OBS. Only if a rule is missing or blocking, Windows asks once (UAC) to add the rule *Hollyland Tally (OBS TCP 8099)*. If you say No, it shows what to do.
+- Prints a summary: Python, OBS, script added/loaded, firewall, and **this PC's IP to enter as Switcher IP on the base**.
+- Log: `%TEMP%\hollyland_tally_install.log`.
+
+Out of the box, **lights 1, 2, 3, 4 follow your first 4 OBS scenes** (scene list order). To choose yourself: **Tools → Scripts → obs_hollyland_tally.py** and pick a scene/source per light; your choice always wins.
+
+### ติดตั้ง (ภาษาไทย)
+1. กด **Code → Download ZIP** แล้วคลิกขวาที่ไฟล์ ZIP → **Extract All**
+2. ดับเบิลคลิก **`Install Hollyland Tally.bat`** จบแค่นี้ ตัวติดตั้งหา OBS/Python เอง ถ้าไม่มี Python จะโหลด Python 3.11 จาก python.org มาติดตั้งให้ ตั้งค่า Python ใน OBS เพิ่มสคริปต์ เช็กไฟร์วอลล์ แล้วเปิด OBS ให้ ตอนจบจะบอก IP ของเครื่องนี้ไว้ใส่เป็น Switcher IP ที่ตัวฐาน
+3. ตอนแรกไฟ 1–4 จะตาม Scene 4 อันแรกใน OBS อัตโนมัติ เปลี่ยนเองได้ที่ Tools → Scripts
+
+### Uninstall
+Double-click **`Uninstall Hollyland Tally.bat`**: removes the script from all scene collections and deletes its files (Python and the OBS Python setting are left alone).
+
+### Troubleshooting
+- *"install.ps1 was not found"*: you ran the .bat from inside the ZIP. Extract the ZIP first.
+- The window says the tally device is found but not connected: on the base set **Switcher IP = this PC's IP** (shown in the window), not the base's own IP.
+- Anything else: send `%TEMP%\hollyland_tally_install.log`.
 
 ## Set up the tally base
 On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the computer running OBS** (shown in the status window), **port 8099**. Do not enter the base's own IP. Both must be on the same network.
@@ -43,6 +64,7 @@ On a scene change the script also pushes `TALLY OK …` and `ACTS OK InputPrevie
 | `obs_hollyland_tally.py` | OBS script (vMix TCP emulator + tally logic) |
 | `tally_window.pyw` | Status window (tkinter), started by the script |
 | `Install Hollyland Tally.bat`, `install.ps1`, `add_to_obs.py` | Windows installer |
+| `Uninstall Hollyland Tally.bat`, `uninstall.ps1` | Windows uninstaller |
 
 ## License
 MIT
