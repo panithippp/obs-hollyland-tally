@@ -1,9 +1,17 @@
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Write-Host "Hollyland Tally for OBS - installer" -ForegroundColor Cyan
-if (Get-Process obs64 -ErrorAction SilentlyContinue) {
-  Write-Host "Please close OBS first, then run this installer again." -ForegroundColor Yellow
-  Read-Host "Press Enter to exit"; exit 1
+$obs = Get-Process obs64 -ErrorAction SilentlyContinue
+if ($obs) {
+  Write-Host "OBS is open - closing it so the installer can update its settings..." -ForegroundColor Yellow
+  $obs | ForEach-Object { [void]$_.CloseMainWindow() }
+  for ($i = 0; $i -lt 60 -and (Get-Process obs64 -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 500 }
+  if (Get-Process obs64 -ErrorAction SilentlyContinue) {
+    Write-Host "OBS did not close. Please close OBS (answer any dialog it shows), then run this installer again." -ForegroundColor Red
+    Read-Host "Press Enter to exit"; exit 1
+  }
+  Start-Sleep -Seconds 2
+  $reopen = $true
 }
 # find Python 3.11 (python.org install)
 $cands = @("$env:LOCALAPPDATA\Programs\Python\Python311", "$env:LOCALAPPDATA\Programs\Python\Python310", "$env:LOCALAPPDATA\Programs\Python\Python312", "C:\Program Files\Python311", "C:\Python311")
@@ -42,4 +50,8 @@ if (Test-Path "$obsDir\global.ini") { Set-ObsPython "$obsDir\global.ini" }
 if ($LASTEXITCODE -ne 0) { Write-Host "Could not add the script to OBS. Open OBS once, close it, then run this installer again." -ForegroundColor Red; Read-Host "Press Enter to exit"; exit 1 }
 Write-Host "`nDone. Open OBS: the tally script loads by itself and the status window opens automatically." -ForegroundColor Green
 Write-Host "Set the Hollyland base 'Switcher IP' to this PC's IP, port 8099."
+if ($reopen) {
+  $exe = "C:\Program Files\obs-studio\bin\64bit\obs64.exe"
+  if (Test-Path $exe) { Write-Host "Reopening OBS..."; Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe) }
+}
 Read-Host "Press Enter to close"

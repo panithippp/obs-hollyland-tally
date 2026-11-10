@@ -406,7 +406,13 @@ def write_status(quit=False):
              "port": settings_cache.get("port", 8099)}
         tmp = STATUS_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False)
-        os.replace(tmp, STATUS_FILE)
+        for _i in range(5):
+            try:
+                os.replace(tmp, STATUS_FILE); break
+            except PermissionError:
+                time.sleep(0.01)  # window is reading the file (Windows), retry
+        else:
+            with open(STATUS_FILE, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False)
     except Exception as e:
         print("[Tally] write_status error: %s" % e)
 
