@@ -17,13 +17,26 @@ $dest = "$env:APPDATA\obs-studio\scripts"
 New-Item -ItemType Directory -Force $dest | Out-Null
 Copy-Item "$here\obs_hollyland_tally.py" $dest -Force
 Copy-Item "$here\tally_window.pyw" $dest -Force
-# tell OBS where Python is
-$ini = "$env:APPDATA\obs-studio\user.ini"
-$txt = if (Test-Path $ini) { Get-Content $ini -Raw } else { "" }
-if ($txt -notmatch "(?m)^Path64=") {
-  Add-Content $ini "`r`n[Python]`r`nPath64=$($py -replace '\\','/')"
-  Write-Host "Set OBS Python path"
+# tell OBS where Python is ([Python] Path64bit in user.ini, older OBS: global.ini)
+$pyPath = $py -replace '\\','/'
+function Set-ObsPython($ini) {
+  $lines = if (Test-Path $ini) { [System.Collections.Generic.List[string]]@(Get-Content $ini) } else { New-Object System.Collections.Generic.List[string] }
+  $start = $lines.IndexOf("[Python]")
+  if ($start -lt 0) { $lines.Add(""); $lines.Add("[Python]"); $lines.Add("Path64bit=$pyPath") }
+  else {
+    $end = $lines.Count
+    for ($i = $start + 1; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\[') { $end = $i; break } }
+    $found = $false
+    for ($i = $start + 1; $i -lt $end; $i++) { if ($lines[$i] -match '^Path64bit=') { $lines[$i] = "Path64bit=$pyPath"; $found = $true } }
+    if (-not $found) { $lines.Insert($start + 1, "Path64bit=$pyPath") }
+  }
+  [System.IO.File]::WriteAllLines($ini, $lines, (New-Object System.Text.UTF8Encoding($false)))
+  Write-Host "Set OBS Python path in $(Split-Path -Leaf $ini): $pyPath"
 }
+$obsDir = "$env:APPDATA\obs-studio"
+New-Item -ItemType Directory -Force $obsDir | Out-Null
+Set-ObsPython "$obsDir\user.ini"
+if (Test-Path "$obsDir\global.ini") { Set-ObsPython "$obsDir\global.ini" }
 # add script to OBS Tools > Scripts
 & "$py\python.exe" "$here\add_to_obs.py"
 Write-Host "`nDone. Open OBS: the tally script loads by itself and the status window opens automatically." -ForegroundColor Green
