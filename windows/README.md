@@ -1,5 +1,5 @@
 # Windows
 
-Double-click **Install Hollyland Tally.bat** to install.
+Double-click **1. Click to Install.bat** first.
 
-To uninstall, double-click **Uninstall Hollyland Tally.bat**.
+To uninstall, double-click **2. Uninstall.bat**.

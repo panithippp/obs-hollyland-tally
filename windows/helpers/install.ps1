@@ -1,4 +1,4 @@
-# Hollyland Tally for OBS - Windows installer (run via "Install Hollyland Tally.bat")
+# Hollyland Tally for OBS - Windows installer (run via "1. Click to Install.bat")
 # No admin needed. Only the optional firewall step asks for UAC, and only if it is needed.
 # Test switches (normal users never need them):
 #   -NoObsControl      never close/start OBS (for tests with a temporary APPDATA)
@@ -15,10 +15,11 @@ $PY_PREF = @("3.11", "3.12", "3.10", "3.9", "3.8")   # OBS 28-33 load Python 3.6
 $PORT    = 8099
 $log     = Join-Path $env:TEMP "hollyland_tally_install.log"
 $here    = Split-Path -Parent $MyInvocation.MyCommand.Path
-$root    = Split-Path -Parent $here
-# Installer files are in windows/; the OBS script files live in the repo root (parent folder).
+# This script lives in windows\helpers; the clickable installer is in windows\; scripts are in the repo root.
+if ((Split-Path -Leaf $here) -eq "helpers") { $app = Split-Path -Parent $here } else { $app = $here }
+$root    = Split-Path -Parent $app
 function Get-Src([string]$name) {
-  foreach ($d in @($here, $root)) {
+  foreach ($d in @($app, $root)) {
     $p = Join-Path $d $name
     if (Test-Path -LiteralPath $p) { return $p }
   }
@@ -308,14 +309,13 @@ function Get-LanIps {
 try {
   try { Start-Transcript -LiteralPath $log -Force | Out-Null; $script:startedTranscript = $true } catch {}
   Say "Hollyland Tally for OBS - installer" Cyan
-  Say "Folder: $here"
+  Say "Folder: $app"
   Say "Scripts: $root"
   Say "Log:    $log"
   foreach ($f in @("obs_hollyland_tally.py", "tally_window.pyw", "add_to_obs.py")) {
-    if (-not (Get-Src $f)) { throw "Missing file '$f'. Extract the whole ZIP first (right click > Extract All), then open the windows folder and run the installer from there." }
+    if (-not (Get-Src $f)) { throw "Missing file '$f'. Extract the whole ZIP first (right click > Extract All), then open the windows folder and double-click '1. Click to Install.bat'." }
   }
-  Get-ChildItem -LiteralPath $here -File | Unblock-File -ErrorAction SilentlyContinue
-  Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue
+  foreach ($d in @($app, $here, $root)) { if (Test-Path -LiteralPath $d) { Get-ChildItem -LiteralPath $d -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue } }
   if ($ListPython) {
     foreach ($d in (Find-PythonCandidates | ForEach-Object { $_.TrimEnd('\', '/') } | Sort-Object -Unique)) { $t = Test-Python $d; if ($t) { Say ("usable  {0}  tkinter={1}  {2}" -f $t.Ver, $t.Tk, $t.Dir) Green } elseif (Test-Path -LiteralPath (Join-Path $d "python.exe")) { Say "skipped $d (not 64-bit, no pythonw/DLL, or version OBS cannot load)" } }
     $b = Select-Python; Say "selected: $(if ($b) { "$($b.Ver) $($b.Dir)" } else { 'none' })" Cyan

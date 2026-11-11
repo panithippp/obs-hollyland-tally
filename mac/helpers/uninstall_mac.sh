@@ -1,14 +1,15 @@
 #!/bin/bash
-# Hollyland Tally for OBS - macOS uninstaller (run via "Uninstall Hollyland Tally.command")
+# Hollyland Tally for OBS - macOS uninstaller (run via "2. Uninstall.command")
 # Removes the script from every OBS scene collection and deletes its two files.
 # Keeps Python and the OBS Python path (other scripts may use them).
 # Test switches: --no-obs-control, --no-pause, --yes, --obs-dir DIR
 CFG="$HOME/Library/Application Support/obs-studio"
 BUNDLE_ID="com.obsproject.obs-studio"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "$HERE/.." && pwd)"
+if [ "$(basename "$HERE")" = helpers ]; then APP="$(cd "$HERE/.." && pwd)"; else APP="$HERE"; fi
+ROOT="$(cd "$APP/.." && pwd)"
 src() {
-  if [ -f "$HERE/$1" ]; then printf '%s\n' "$HERE/$1"
+  if [ -f "$APP/$1" ]; then printf '%s\n' "$APP/$1"
   elif [ -f "$ROOT/$1" ]; then printf '%s\n' "$ROOT/$1"
   fi
 }

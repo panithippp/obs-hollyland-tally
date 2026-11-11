@@ -1,5 +1,5 @@
 #!/bin/bash
-# Hollyland Tally for OBS - macOS installer (run via "Install Hollyland Tally.command")
+# Hollyland Tally for OBS - macOS installer (run via "1. Click to Install.command")
 # No admin password needed. Homebrew is used only if it is already installed and you say yes.
 # Works with the macOS /bin/bash (3.2). Test switches (normal users never need them):
 #   --no-obs-control   never quit/start OBS
@@ -12,10 +12,11 @@ PY_PREF="3.11 3.12 3.10 3.9 3.8"          # OBS 28-33 load Python 3.6 - 3.12 (3.
 OBS_TRIES="3.12 3.11 3.10 3.9 3.8 3.7 3.6" # the order OBS itself tries inside one folder
 BUNDLE_ID="com.obsproject.obs-studio"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "$HERE/.." && pwd)"
-# Installer files are in mac/; the OBS script files live in the repo root (parent folder).
-src() {  # $1 = filename. Prefer this folder, then the parent folder.
-  if [ -f "$HERE/$1" ]; then printf '%s\n' "$HERE/$1"
+# This script lives in mac/helpers/; the clickable installer is in mac/; scripts are in the repo root.
+if [ "$(basename "$HERE")" = helpers ]; then APP="$(cd "$HERE/.." && pwd)"; else APP="$HERE"; fi
+ROOT="$(cd "$APP/.." && pwd)"
+src() {  # $1 = filename. Look in mac/, then the repo root.
+  if [ -f "$APP/$1" ]; then printf '%s\n' "$APP/$1"
   elif [ -f "$ROOT/$1" ]; then printf '%s\n' "$ROOT/$1"
   fi
 }
@@ -287,7 +288,7 @@ fail() {
 
 # ================= main =================
 say "${C_CYAN}Hollyland Tally for OBS - macOS installer${C_OFF}"
-say "Folder: $HERE"
+say "Folder: $APP"
 say "Scripts: $ROOT"
 say "Log:    $LOG"
 echo
@@ -301,9 +302,9 @@ say "  5. Open the scripts folder in Finder so you can see the files"
 say "  6. Show a summary and this Mac's IP for the Hollyland tally base"
 say "At the end this window stays open so you can read the summary, then close it yourself."
 for f in obs_hollyland_tally.py tally_window.pyw add_to_obs.py; do
-  [ -n "$(src "$f")" ] || fail "Missing file '$f'. Extract the whole ZIP first (double-click it), then open the mac folder and run 'Install Hollyland Tally.command' from there."
+  [ -n "$(src "$f")" ] || fail "Missing file '$f'. Extract the whole ZIP first (double-click it), then open the mac folder and double-click '1. Click to Install.command'."
 done
-chmod +x "$HERE/"*.command 2>/dev/null   # in case the ZIP lost the execute bit (for the uninstaller later)
+chmod +x "$APP/"*.command "$HERE/"*.sh 2>/dev/null   # in case the ZIP lost the execute bit
 [ "$(uname -s)" = Darwin ] || warn "This installer is for macOS (this system is $(uname -s))."
 
 OBS_APP="$(find_obs)"

@@ -1,12 +1,13 @@
-# Hollyland Tally for OBS - uninstaller (run via "Uninstall Hollyland Tally.bat")
+# Hollyland Tally for OBS - uninstaller (run via "2. Uninstall.bat")
 # Removes the script from every OBS scene collection and deletes its files.
 # Keeps Python and the OBS Python path (other scripts may use them).
 param([switch]$NoObsControl, [switch]$NoPause, [switch]$Yes)
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$root = Split-Path -Parent $here
+if ((Split-Path -Leaf $here) -eq "helpers") { $app = Split-Path -Parent $here } else { $app = $here }
+$root = Split-Path -Parent $app
 function Get-Src([string]$name) {
-  foreach ($d in @($here, $root)) {
+  foreach ($d in @($app, $root)) {
     $p = Join-Path $d $name
     if (Test-Path -LiteralPath $p) { return $p }
   }
