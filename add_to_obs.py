@@ -1,12 +1,24 @@
 """Add (or remove with --remove) obs_hollyland_tally.py in every OBS scene collection.
-Used by install.ps1 / uninstall.ps1. OBS must be closed (it rewrites these files on exit).
-Existing script settings (light mapping) are kept."""
+Used by install.ps1 / uninstall.ps1 (Windows) and install_mac.sh / uninstall_mac.sh (macOS).
+OBS must be closed (it rewrites these files on exit). Existing script settings (light mapping) are kept.
+Optional: --obsdir DIR  = the OBS settings folder (default: the normal one for this OS)."""
 import json, glob, os, sys, shutil, time
 
 NAME = "obs_hollyland_tally.py"
 remove = "--remove" in sys.argv
-appdata = os.environ["APPDATA"]
-obsdir = os.path.join(appdata, "obs-studio")
+
+def obs_config_dir():
+    if "--obsdir" in sys.argv:
+        i = sys.argv.index("--obsdir")
+        if i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+    if os.name == "nt":
+        return os.path.join(os.environ["APPDATA"], "obs-studio")
+    if sys.platform == "darwin":
+        return os.path.expanduser("~/Library/Application Support/obs-studio")
+    return os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "obs-studio")
+
+obsdir = obs_config_dir()
 path = os.path.join(obsdir, "scripts", NAME).replace("\\", "/")
 files = sorted(glob.glob(os.path.join(obsdir, "basic", "scenes", "*.json")))
 stamp = time.strftime("%Y%m%d_%H%M%S")
