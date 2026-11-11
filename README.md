@@ -136,6 +136,57 @@ It needs:
 
 On a scene change the script also pushes `TALLY OK …` and `ACTS OK InputPreview n` immediately, so the lights do not wait for the next poll.
 
+### Example: Camera 1 is Program, Camera 2 is Preview
+Assume Studio Mode is on, and light 1 is mapped to Camera 1 and light 2 to Camera 2.
+
+**First check (when OBS starts or the script loads):** the script reads whatever is already Program and Preview. You do not have to click anything first. When the base connects and asks `TALLY` / `ACTS InputPreview`, or as soon as a change is pushed, the lights match that current state. In this example the script sends:
+```
+TALLY OK 1200000000000000
+ACTS OK InputPreview 2
+```
+Light 1 is red (Program), light 2 is green (Preview), and the other lights stay off. The 5-second connection checks (four times after start or reload, then every 60 seconds) only ask whether the base is still connected. They do not drive the lights.
+
+**When you click Cut or Transition:** OBS swaps the scenes — Camera 2 becomes Program and Camera 1 becomes Preview. The script sees that change immediately and pushes:
+```
+TALLY OK 2100000000000000
+ACTS OK InputPreview 1
+```
+Light 2 turns red and light 1 turns green. A slower Transition follows when OBS updates Program and Preview, usually as the transition starts.
+
+Green Preview needs Studio Mode. Light numbers follow the mapping in the script (or auto-map, which is scene-list order).
+
+### หลักการทำงาน (บันทึกโปรโตคอล)
+ตัวฐาน Hollyland **ไม่ได้** ส่ง `SUBSCRIBE TALLY` แต่โพลล์ประมาณวินาทีละครั้งด้วย:
+```
+TALLY
+ACTS Overlay1 … ACTS Overlay4
+ACTS InputPreview
+```
+สิ่งที่ต้องตอบกลับ:
+- `TALLY OK <digits>` (0 = ดับ, 1 = program, 2 = preview ตามแต่ละช่อง)
+- `ACTS OK <name> <n>`; สำหรับ `InputPreview`, `n` = หมายเลขอินพุตที่เป็น Preview **ไฟเขียวติดเมื่อทั้งหลัก TALLY เป็น 2 และ InputPreview ชี้ช่องเดียวกัน** ดังนั้นไฟเขียวได้ครั้งละดวงเดียว
+
+เมื่อซีนเปลี่ยน สคริปต์จะส่ง `TALLY OK …` และ `ACTS OK InputPreview n` ทันที ไฟจึงไม่ต้องรอรอบโพลล์ถัดไป
+
+### ตัวอย่าง: กล้อง 1 เป็น Program, กล้อง 2 เป็น Preview
+สมมติว่าเปิด Studio Mode อยู่ และไฟ 1 จับคู่กับ Camera 1, ไฟ 2 จับคู่กับ Camera 2
+
+**ครั้งแรก (ตอนเปิด OBS หรือโหลดสคริปต์):** สคริปต์อ่านค่า Program และ Preview ที่มีอยู่แล้ว ไม่ต้องกดอะไรก่อน เมื่อตัวฐานเชื่อมต่อแล้วถาม `TALLY` / `ACTS InputPreview` หรือเมื่อสคริปต์ส่งค่าไปเอง ไฟจะตรงกับสถานะตอนนั้น ในตัวอย่างนี้สคริปต์ส่ง:
+```
+TALLY OK 1200000000000000
+ACTS OK InputPreview 2
+```
+ไฟ 1 แดง (Program), ไฟ 2 เขียว (Preview) ไฟดวงอื่นดับ การเช็กทุก 5 วินาที (4 ครั้งหลังเปิดหรือรีโหลด แล้วค่อยทุก 60 วินาที) เป็นการเช็กแค่ว่าตัวฐานยังเชื่อมต่ออยู่ ไม่ได้สั่งสีไฟ
+
+**เมื่อกด Cut หรือ Transition:** OBS สลับซีน Camera 2 ขึ้นเป็น Program และ Camera 1 เป็น Preview สคริปต์เห็นการเปลี่ยนแปลงทันทีแล้วส่ง:
+```
+TALLY OK 2100000000000000
+ACTS OK InputPreview 1
+```
+ไฟ 2 เปลี่ยนเป็นแดง ไฟ 1 เปลี่ยนเป็นเขียว ถ้าใช้ Transition แบบมีเวลา ไฟจะตามตอนที่ OBS อัปเดต Program และ Preview ซึ่งมักเป็นตอนเริ่มทรานซิชัน
+
+ไฟเขียวของ Preview ต้องเปิด Studio Mode หมายเลขไฟตามการจับคู่ในสคริปต์ (หรือ auto-map ตามลำดับซีนในลิสต์)
+
 ## Files
 | File | Purpose |
 |---|---|
