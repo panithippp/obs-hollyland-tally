@@ -4,14 +4,32 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 
 ใช้ไฟ Tally ไร้สายของ Hollyland กับ OBS Studio ได้โดยไม่ต้องมี vMix: สคริปต์ Python ของ OBS จำลอง vMix TCP API (พอร์ต 8099) ให้ตัวฐานคุยด้วย
 
-## Features
-- Red = Program, Green = Preview (Studio Mode), real-time.
-- Map each tally light (1–16) to an OBS scene or source (auto-mapped to the first scenes until you choose).
-- Status window opens automatically when the script loads (no terminal): big colored rows per light, this PC's IP, connection state.
-- Status window can be resized freely (drag the frame): the colour bars and all text scale with it. Text size: **A- / A+** in the window, keys **+ / -** (**0** = 100 %), or OBS → Tools → Scripts → *Status window text size*. Size, position and text size are remembered (`~/.hollyland_tally_window.json`).
+## What this script can do
+- Light up a Hollyland wireless tally system from OBS Studio, with no vMix.
+- Red = Program, green = Preview (Studio Mode), in real time. Lights update as soon as you switch a scene or source, not only on the next poll.
+- Map each tally light (1–16) to an OBS scene or a source. Until you choose, lights 1–4 follow your first scenes automatically.
+- A status window opens when the script loads (no terminal): one color bar per light, this PC's IP, and whether the base is connected.
+- The bars use color only — no color names or Program/Preview wording on the rows. A top legend on a black background says **RED = PROGRAM** in red and **GREEN = PREVIEW** in green. The next line, in white, shows a rectangle = scene and an arrow = source.
+- A drawn rectangle appears before a scene name, and a left-to-right arrow before a source name.
+- After OBS starts or you reload the script, it checks the tally connection every 5 seconds, four times, then every 60 seconds.
+- Auto-scans the LAN for the tally base and tells you what to set if it is found but not connected.
+- One-click Windows installer. On macOS you copy the two script files and point OBS at Python.
+- MIT license.
+
+### Status window details
+- Resize the window freely (drag the frame): the colour bars and all text scale with it. Text size: **A- / A+** in the window, keys **+ / -** (**0** = 100 %), or OBS → Tools → Scripts → *Status window text size*. Size, position and text size are remembered (`~/.hollyland_tally_window.json`).
 - Closing the status window (X) keeps it closed. To show it again: OBS → Tools → Scripts → **Open status window** (it also comes back when OBS restarts or the script is reloaded). If the window crashes, the script reopens it.
-- Auto-scans the network for the tally base and tells you what to set if it is found but not connected.
-- One-click Windows installer.
+
+### สคริปต์ทำอะไรได้บ้าง
+- ใช้ไฟ Tally ไร้สายของ Hollyland กับ OBS ได้ โดยไม่ต้องมี vMix
+- แดง = Program, เขียว = Preview (Studio Mode) แบบเรียลไทม์ ไฟเปลี่ยนทันทีเมื่อสลับซีนหรือซอร์ส ไม่ต้องรอรอบโพลล์ถัดไป
+- จับคู่ไฟ 1–16 กับซีนหรือซอร์สใน OBS ได้ ถ้ายังไม่เลือกเอง ไฟ 1–4 จะตามซีนแรกโดยอัตโนมัติ
+- มีหน้าต่างสถานะเปิดเองเมื่อโหลดสคริปต์: แถบสีแต่ละไฟ, IP ของเครื่องนี้, และสถานะการเชื่อมต่อ
+- แถบสีไม่ใส่ชื่อสีหรือคำว่า Program/Preview ด้านบนมีคำอธิบายพื้นดำ: **RED = PROGRAM** สีแดง และ **GREEN = PREVIEW** สีเขียว บรรทัดถัดไปตัวหนังสือสีขาว บอกว่าไอคอนสี่เหลี่ยม = ซีน, ลูกศร = ซอร์ส
+- หน้าชื่อซีนมีไอคอนสี่เหลี่ยม หน้าชื่อซอร์สมีลูกศรซ้ายไปขวา
+- หลังเปิด OBS หรือรีโหลดสคริปต์ จะเช็กการเชื่อมต่อทุก 5 วินาที 4 ครั้ง แล้วค่อยกลับไปเช็กทุก 60 วินาที
+- สแกนหาตัวฐานในเครือข่าย และบอกว่าต้องตั้งอะไร หากเจอเครื่องแต่ยังไม่เชื่อมต่อ
+- ตัวติดตั้งคลิกเดียวบน Windows ส่วนบน macOS ให้คัดลอกไฟล์สคริปต์ 2 ไฟล์ แล้วชี้ OBS ไปที่ Python
 
 ## Install (Windows)
 1. On GitHub: **Code → Download ZIP**. Right click the ZIP → **Extract All**.
@@ -47,7 +65,7 @@ Double-click **`Uninstall Hollyland Tally.bat`**: removes the script from all sc
 ## หน้าต่างสถานะ (Status window) — ภาษาไทย
 - ลากขอบหน้าต่างเพื่อย่อ/ขยาย แถบสีและตัวอักษรจะปรับขนาดตามอัตโนมัติ
 - ปรับขนาดตัวอักษร: ปุ่ม **A- / A+** ในหน้าต่าง, คีย์ **+ / -** (**0** = 100%) หรือ OBS → Tools → Scripts → *ขนาดตัวอักษร % (Status window text size)* — จำขนาด/ตำแหน่งหน้าต่างไว้ให้ครั้งต่อไป
-- กด X ปิดแล้วจะไม่เด้งขึ้นมาอีก ถ้าต้องการเปิดใหม่: OBS → Tools → Scripts → **🪟 เปิดหน้าต่างสถานะ (Open status window)** (เปิด OBS ใหม่ หรือ reload สคริปต์ ก็จะกลับมาเอง)
+- กด X ปิดแล้วจะไม่เด้งขึ้นมาอีก ถ้าต้องการเปิดใหม่: OBS → Tools → Scripts → **เปิดหน้าต่างสถานะ (Open status window)** (เปิด OBS ใหม่ หรือ reload สคริปต์ ก็จะกลับมาเอง)
 
 ## Set up the tally base
 On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the computer running OBS** (shown in the status window), **port 8099**. Do not enter the base's own IP. Both must be on the same network.
