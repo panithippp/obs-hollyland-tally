@@ -201,6 +201,26 @@ def main():
     basel = tk.Label(root, text="", font=mid, bg="#111111", fg="#dddddd", anchor="w", justify="left")
     basel.pack(fill="x", padx=14, pady=2)
     guide = tk.Label(root, text="", font=small, bg="#3a2a00", fg="#ffd27a", anchor="w", justify="left", padx=10, pady=6)
+    legend = tk.Frame(root, bg="#000000")
+    legend.pack(fill="x", padx=14, pady=(6, 0))
+    leg_row1 = tk.Frame(legend, bg="#000000")
+    leg_row2 = tk.Frame(legend, bg="#000000")
+    leg_row1.pack(fill="x")
+    leg_row2.pack(fill="x")
+    leg_red = tk.Label(leg_row1, text="RED = PROGRAM", font=small, bg="#000000", fg="#ff3b30",
+                       anchor="w")
+    leg_green = tk.Label(leg_row1, text="GREEN = PREVIEW", font=small, bg="#000000", fg="#32d74b",
+                         anchor="w")
+    leg_red.pack(side="left", padx=(10, 24), pady=(4, 2))
+    leg_green.pack(side="left", padx=(0, 10), pady=(4, 2))
+    leg_scene_ic = tk.Canvas(leg_row2, width=16, height=16, bg="#000000", highlightthickness=0, bd=0)
+    leg_scene = tk.Label(leg_row2, text="= scene", font=small, bg="#000000", fg="#ffffff", anchor="w")
+    leg_src_ic = tk.Canvas(leg_row2, width=16, height=16, bg="#000000", highlightthickness=0, bd=0)
+    leg_src = tk.Label(leg_row2, text="= source", font=small, bg="#000000", fg="#ffffff", anchor="w")
+    leg_scene_ic.pack(side="left", padx=(10, 4), pady=(2, 4))
+    leg_scene.pack(side="left", padx=(0, 20), pady=(2, 4))
+    leg_src_ic.pack(side="left", padx=(0, 4), pady=(2, 4))
+    leg_src.pack(side="left", padx=(0, 10), pady=(2, 4))
     box = tk.Frame(root, bg="#111111"); box.pack(fill="both", expand=True, padx=14, pady=6)
     note = tk.Label(root, text="", font=small, bg="#111111", fg="#9e9e9e", anchor="w", justify="left")
     note.pack(fill="x", padx=14, pady=(0, 10))
@@ -234,12 +254,17 @@ def main():
         for fo, n in ((big, "big"), (mid, "mid"), (small, "small"), (btnf, "btn")):
             if fo.cget("size") != f[n]: fo.configure(size=f[n])
         wrap = max(100, w - 40)
-        for l in (ipl, basel, note):
+        for l in (ipl, basel, note, leg_red, leg_green, leg_scene, leg_src):
             l.configure(wraplength=wrap)
         guide.configure(wraplength=max(100, w - 60))
         head.configure(wraplength=max(100, w - 40 - ctl.winfo_reqwidth()))
-        for l in rows:
-            l.configure(wraplength=max(100, w - 70), padx=max(4, f["big"] // 2), pady=max(1, f["big"] // 6))
+        for rec in rows:
+            rec["num"].configure(padx=max(4, f["big"] // 2), pady=max(1, f["big"] // 6))
+            rec["name"].configure(wraplength=max(100, w - 90), padx=max(4, f["big"] // 3), pady=max(1, f["big"] // 6))
+            if rec.get("key"):
+                _ch, _name, kind, bg, fg = rec["key"]
+                draw_kind_icon(rec["icon"], kind, fg, bg, icon_size())
+        draw_legend_icons()
         pct.configure(text="%d%%" % st["scale"])
 
     def on_configure(e):
@@ -281,6 +306,43 @@ def main():
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", lambda: finish(user=True))
+
+
+    def icon_size():
+        return max(14, int(big.cget("size") * 1.15))
+
+    def draw_kind_icon(cv, kind, fg, bg, size):
+        """A rectangle for a scene, a left-to-right arrow for a source. Drawn so they always show."""
+        size = max(12, int(size))
+        cv.delete("all")
+        cv.configure(width=size, height=size, bg=bg, highlightthickness=0, bd=0)
+        pad = max(2, size // 7)
+        lw = max(2, size // 10)
+        if kind == "scene":
+            cv.create_rectangle(pad, pad, size - pad, size - pad, outline=fg, width=lw)
+        elif kind == "source":
+            mid = size / 2.0
+            cv.create_line(pad, mid, size - pad, mid, fill=fg, width=lw, arrow="last",
+                           arrowshape=(max(6, size // 2), max(8, int(size * 0.6)), max(3, size // 5)))
+
+    def draw_legend_icons():
+        size = max(12, int(small.cget("size") * 1.15))
+        draw_kind_icon(leg_scene_ic, "scene", "#ffffff", "#000000", size)
+        draw_kind_icon(leg_src_ic, "source", "#ffffff", "#000000", size)
+
+    def make_row():
+        fr = tk.Frame(box, bg="#2b2b2b")
+        num = tk.Label(fr, font=big, anchor="center", width=3)
+        ic = tk.Canvas(fr, highlightthickness=0, bd=0, width=26, height=26, bg="#2b2b2b")
+        name = tk.Label(fr, font=big, anchor="w")
+        num.pack(side="left", padx=(12, 4), pady=4)
+        ic.pack(side="left", padx=(0, 10))
+        name.pack(side="left", fill="both", expand=True, pady=4, padx=(0, 12))
+        fr.pack(fill="both", expand=True, pady=3)
+        rec = {"fr": fr, "num": num, "icon": ic, "name": name, "key": None}
+        rows.append(rec)
+        return rec
+
 
     def tick():
         if st["closing"]: return
@@ -328,33 +390,37 @@ def main():
             guide.config(text="Please set Switcher IP on the tally device to receive commands from OBS:\n"
                               "Switcher IP = %s   (OBS IP)     Port = %s\n"
                               "Do not use %s - that is the tally device's own IP." % (main_ip, port, base_ip))
-            guide.pack(fill="x", padx=14, pady=6, before=box)
+            guide.pack(fill="x", padx=14, pady=6, before=legend)
         else:
             basel.config(text="Tally device: NOT FOUND%s" % ("  (scanning...)" if scan["busy"] else ""), fg="#ff8a80")
             guide.config(text="1) Turn on the tally device and connect it to the same network as this computer.\n"
                               "2) Set Switcher IP on the tally device to %s (OBS IP), Port = %s\n"
                               "3) This window turns green when the device connects." % (main_ip, port))
-            guide.pack(fill="x", padx=14, pady=6, before=box)
+            guide.pack(fill="x", padx=14, pady=6, before=legend)
         lights = d.get("lights", [])
         if len(rows) != len(lights):
             while len(rows) < len(lights):
-                l = tk.Label(box, font=big, anchor="w", padx=16, pady=4)
-                l.pack(fill="both", expand=True, pady=3)      # bars share the free height
-                rows.append(l)
+                make_row()
             while len(rows) > len(lights):
-                rows.pop().destroy()
+                rows.pop()["fr"].destroy()
             apply_fonts(force=True)
-        for l, it in zip(rows, lights):
-            bg, fg, txt = COL.get(it["s"], COL["0"])
-            t = "%d   %-13s  %s" % (it["ch"], txt, it["name"])
-            if l.cget("text") != t or l.cget("bg") != bg:
-                l.config(text=t, bg=bg, fg=fg)
+        for rec, it in zip(rows, lights):
+            bg, fg, _txt = COL.get(it["s"], COL["0"])
+            kind = it.get("kind") or ""
+            key = (it["ch"], it["name"], kind, bg, fg)
+            if rec["key"] != key:
+                rec["key"] = key
+                rec["fr"].configure(bg=bg)
+                rec["num"].configure(text=str(it["ch"]), bg=bg, fg=fg)
+                rec["name"].configure(text=it["name"], bg=bg, fg=fg)
+                rec["icon"].configure(bg=bg)
+                draw_kind_icon(rec["icon"], kind, fg, bg, icon_size())
         if DEBUG:
             try:
                 with open(DEBUG, "w") as f:
                     json.dump({"t": time.time(), "geom": root.wm_geometry(), "scale": st["scale"],
                                "fonts": {"big": big.cget("size"), "mid": mid.cget("size"), "small": small.cget("size")},
-                               "rows": [l.cget("bg") for l in rows], "row_h": [l.winfo_height() for l in rows]}, f)
+                               "rows": [rec["fr"].cget("bg") for rec in rows], "row_h": [rec["fr"].winfo_height() for rec in rows]}, f)
             except Exception:
                 pass
         if not lights:

@@ -345,19 +345,44 @@ def presence_text(clients, now=None, stale_after=120):
             "" if c["sub"] else " [ยังไม่ SUBSCRIBE]", note))
     return True, "<br>".join(lines)
 
+
+SCENE_ICON = "▭"
+SOURCE_ICON = "→"  # left-to-right arrow
+
+def mapping_kind(m):
+    m = m or ""
+    if m.startswith("Scene:"):
+        return "scene"
+    if m.startswith("Source:"):
+        return "source"
+    return ""
+
+def mapping_name(m):
+    m = m or ""
+    return m.split(":", 1)[1] if ":" in m else m
+
+def mapping_label(m):
+    """Rectangle icon before a scene name, left-to-right arrow before a source name."""
+    kind = mapping_kind(m)
+    name = mapping_name(m)
+    if kind == "scene":
+        return "%s  %s" % (SCENE_ICON, name)
+    if kind == "source":
+        return "%s  %s" % (SOURCE_ICON, name)
+    return name
+
 def channel_status_text(tally, mapping, n_lights):
     rows = []
     for ch in range(1, n_lights + 1):
         m = mapping.get(ch) or ""
         if not m:
             continue
-        name = m.split(":", 1)[1]
-        rows.append("%d %s = %s" % (ch, name, COLOR_TH.get(tally[ch - 1] if ch <= len(tally) else "0")))
+        rows.append("%d %s = %s" % (ch, mapping_label(m), COLOR_TH.get(tally[ch - 1] if ch <= len(tally) else "0")))
     return "<br>".join(rows) or "(ยังไม่ได้ตั้งไฟเบอร์ไหนเลย)"
 
 def guide_html(ips, port, mapping, n_lights):
     ipstr = ", ".join(ips) or "(หา IP ไม่เจอ — Mac: System Settings > Network / Windows: ipconfig)"
-    knobs = ", ".join("ไฟดวงเบอร์ %d → %s" % (ch, mapping[ch].split(":", 1)[1])
+    knobs = ", ".join("ไฟดวงเบอร์ %d = %s" % (ch, mapping_label(mapping[ch]))
                       for ch in range(1, n_lights + 1) if mapping.get(ch)) or "-"
     return ("<b>📖 วิธีตั้งค่าไฟ Tally Hollyland (Setup guide)</b><ol>"
             "<li>ต่อสาย LAN (Ethernet) จากตัวรับ (Base) เข้าเราเตอร์/สวิตช์วงเดียวกับคอมพิวเตอร์ที่รัน OBS</li>"
@@ -372,8 +397,10 @@ def guide_html(ips, port, mapping, n_lights):
 server = None
 settings_cache = {"auto_test": True, "port": 8099, "n_inputs": 16, "n_lights": 4, "use_preview": True,
                   "mapping": {}, "user_mapping": {}, "auto_map": True, "auto": False, "win_scale": 100}
-_state = {"last_check": 0.0, "connected": None, "presence": "", "props": None}
+_state = {"last_check": 0.0, "connected": None, "presence": "", "props": None, "fast_left": 0}
 CHECK_EVERY = 60
+FAST_CHECK_EVERY = 5
+FAST_CHECK_COUNT = 4
 
 def _scene_tree():
     tree = {}
@@ -453,7 +480,7 @@ def write_status(quit=False):
         for ch in range(1, settings_cache["n_lights"] + 1):
             m = settings_cache["mapping"].get(ch) or ""
             if not m: continue
-            lights.append({"ch": ch, "name": m.split(":", 1)[1] if ":" in m else m,
+            lights.append({"ch": ch, "name": mapping_name(m), "kind": mapping_kind(m),
                            "s": t[ch - 1] if ch <= len(t) else "0"})
         pres = re.sub(r"<[^>]+>", " | ", str(_state.get("presence", ""))).strip(" |")
         pres = re.sub(r"[^\x20-\x7e\u0e00-\u0e7f]", "", pres)
@@ -591,13 +618,20 @@ def refresh():
         write_status()
         print("[Tally] " + channel_status_text(t, settings_cache["mapping"], settings_cache["n_lights"]).replace("<br>", " | "))
 
+def start_fast_presence_checks():
+    """After OBS start or script reload: check every 5s, 4 times, then every 60s."""
+    _state["fast_left"] = FAST_CHECK_COUNT
+
 def check_presence(force=False):
     if server is None:
         _state["presence"] = "❌ เซิร์ฟเวอร์ไม่ทำงาน (port ใช้งานไม่ได้)"; return
     now = time.time()
-    if not force and now - _state["last_check"] < CHECK_EVERY:
+    interval = FAST_CHECK_EVERY if _state.get("fast_left", 0) > 0 else CHECK_EVERY
+    if not force and now - _state["last_check"] < interval:
         return
     _state["last_check"] = now
+    if not force and _state.get("fast_left", 0) > 0:
+        _state["fast_left"] -= 1
     ok, txt = presence_text(server.probe(), now)
     if ok != _state["connected"] or force:
         print("[Tally] ตรวจสถานะ %s: %s" % (time.strftime("%H:%M:%S"), txt.replace("<br>", " | ")))
@@ -708,7 +742,7 @@ def _fill_dynamic(props):
         if obs is not None and server is not None: update_mapping()
         m = settings_cache["mapping"]
         obs.obs_property_set_description(a, "🔁 <b>ตอนนี้ใช้ค่าอัตโนมัติ (auto):</b> " + ", ".join(
-            "ไฟ %d → %s" % (c, m[c][6:]) for c in range(1, settings_cache["n_lights"] + 1) if m.get(c))
+            "ไฟ %d = %s" % (c, mapping_label(m[c])) for c in range(1, settings_cache["n_lights"] + 1) if m.get(c))
             + "<br>เลือกไฟด้านล่างเองเมื่อไหร่ ค่าที่เลือกจะใช้แทน (your choices override)")
         obs.obs_property_set_visible(a, bool(settings_cache.get("auto")))
     p = obs.obs_properties_get(props, "status")
@@ -768,8 +802,8 @@ def script_properties():
         l = obs.obs_properties_add_list(p, "ch%d" % ch, "ไฟเบอร์ %d (Light %d)" % (ch, ch),
                                         obs.OBS_COMBO_TYPE_LIST, obs.OBS_COMBO_FORMAT_STRING)
         obs.obs_property_list_add_string(l, "— ไม่ใช้ (none) —", "")
-        for n in sorted(names_sc): obs.obs_property_list_add_string(l, "Scene: " + n, "Scene:" + n)
-        for n in sorted(names_src): obs.obs_property_list_add_string(l, "Source: " + n, "Source:" + n)
+        for n in sorted(names_sc): obs.obs_property_list_add_string(l, mapping_label("Scene:" + n), "Scene:" + n)
+        for n in sorted(names_src): obs.obs_property_list_add_string(l, mapping_label("Source:" + n), "Source:" + n)
         obs.obs_property_set_visible(l, ch <= settings_cache["n_lights"])
     obs.obs_properties_add_bool(p, "use_preview", "ไฟเขียวตาม Preview ใน Studio Mode")
     obs.obs_properties_add_bool(p, "auto_test", "ทดสอบอัตโนมัติเมื่อเชื่อมต่อ (Auto test on connect)")
@@ -811,6 +845,7 @@ def script_update(s):
         server.on_first_subscribe = _on_base_connected
         try:
             server.start()
+            start_fast_presence_checks()
             print("[Tally] เปิด vMix TCP ที่ port %d, IP ของเครื่องนี้: %s" % (port, ", ".join(lan_ips())))
         except OSError as e:
             print("[Tally] เปิด port %d ไม่ได้: %s" % (port, e)); server = None
@@ -819,6 +854,7 @@ def script_update(s):
 
 def script_load(s):
     _load["t"] = time.time(); _load["busy"] = False; _load["done"] = set()
+    start_fast_presence_checks()
     clear_user_closed()   # OBS start / script reload: show the status window again
     # script added while OBS is already up (Tools > Scripts): a current scene exists, so it is safe now.
     # At OBS startup there is no current scene yet; FINISHED_LOADING handles that case.
