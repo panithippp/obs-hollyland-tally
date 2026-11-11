@@ -13,7 +13,7 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 - A drawn rectangle appears before a scene name, and a left-to-right arrow before a source name.
 - After OBS starts or you reload the script, it checks the tally connection every 5 seconds, four times, then every 60 seconds.
 - Auto-scans the LAN for the tally base and tells you what to set if it is found but not connected.
-- Double-click installers for Windows (`Install Hollyland Tally.bat`) and macOS (`Install Hollyland Tally.command`).
+- Double-click installers in the `windows` folder (`Install Hollyland Tally.bat`) or the `mac` folder (`Install Hollyland Tally.command`).
 - MIT license.
 
 ### Status window details
@@ -29,11 +29,16 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 - หน้าชื่อซีนมีไอคอนสี่เหลี่ยม หน้าชื่อซอร์สมีลูกศรซ้ายไปขวา
 - หลังเปิด OBS หรือรีโหลดสคริปต์ จะเช็กการเชื่อมต่อทุก 5 วินาที 4 ครั้ง แล้วค่อยกลับไปเช็กทุก 60 วินาที
 - สแกนหาตัวฐานในเครือข่าย และบอกว่าต้องตั้งอะไร หากเจอเครื่องแต่ยังไม่เชื่อมต่อ
-- มีตัวติดตั้งแบบดับเบิลคลิกทั้ง Windows (`Install Hollyland Tally.bat`) และ macOS (`Install Hollyland Tally.command`)
+- มีตัวติดตั้งแบบดับเบิลคลิกในโฟลเดอร์ `windows` (`Install Hollyland Tally.bat`) หรือโฟลเดอร์ `mac` (`Install Hollyland Tally.command`)
+
+## Install
+After you extract the GitHub ZIP:
+- **Windows:** open the **`windows`** folder and double-click **`Install Hollyland Tally.bat`**
+- **macOS:** open the **`mac`** folder and double-click **`Install Hollyland Tally.command`**
 
 ## Install (Windows)
 1. On GitHub: **Code → Download ZIP**. Right click the ZIP → **Extract All**.
-2. Double-click **`Install Hollyland Tally.bat`** in the extracted folder. That's all.
+2. Open the **`windows`** folder and double-click **`Install Hollyland Tally.bat`**. That's all.
 
 The installer does everything by itself, no admin needed:
 - Finds OBS Studio (registry or the usual folders). If OBS is not installed it tells you.
@@ -50,15 +55,15 @@ Out of the box, **lights 1, 2, 3, 4 follow your first 4 OBS scenes** (scene list
 
 ### ติดตั้ง (ภาษาไทย)
 1. กด **Code → Download ZIP** แล้วคลิกขวาที่ไฟล์ ZIP → **Extract All**
-2. ดับเบิลคลิก **`Install Hollyland Tally.bat`** จบแค่นี้ ตัวติดตั้งหา OBS/Python เอง ถ้าไม่มี Python จะโหลด Python 3.11 จาก python.org มาติดตั้งให้ ตั้งค่า Python ใน OBS เพิ่มสคริปต์ เช็กไฟร์วอลล์ แล้วเปิด OBS ให้ ตอนจบจะบอก IP ของเครื่องนี้ไว้ใส่เป็น Switcher IP ที่ตัวฐาน
+2. เปิดโฟลเดอร์ **`windows`** แล้วดับเบิลคลิก **`Install Hollyland Tally.bat`** จบแค่นี้ ตัวติดตั้งหา OBS/Python เอง ถ้าไม่มี Python จะโหลด Python 3.11 จาก python.org มาติดตั้งให้ ตั้งค่า Python ใน OBS เพิ่มสคริปต์ เช็กไฟร์วอลล์ แล้วเปิด OBS ให้ ตอนจบจะบอก IP ของเครื่องนี้ไว้ใส่เป็น Switcher IP ที่ตัวฐาน
 3. ตอนแรกไฟ 1–4 จะตาม Scene 4 อันแรกใน OBS อัตโนมัติ เปลี่ยนเองได้ที่ Tools → Scripts
 4. ถ้าเพิ่งลง OBS ใหม่และยังมี Scene ไม่ถึง 4 อัน (OBS ใหม่มีแค่ "Scene") สคริปต์จะสร้าง Scene ที่ขาดให้เองครั้งเดียว ชื่อ **Camera 2, Camera 3, Camera 4** แล้วบันทึกไว้ ไม่ลบหรือเปลี่ยนชื่อ Scene เดิม และจะไม่สร้างถ้าคุณเลือกไฟเองแล้วหรือปิด auto-map ไว้ จากนั้นใส่กล้องลงในแต่ละ Scene ได้เลย
 
 ### Uninstall
-Double-click **`Uninstall Hollyland Tally.bat`**: removes the script from all scene collections and deletes its files (Python and the OBS Python setting are left alone).
+Double-click **`windows/Uninstall Hollyland Tally.bat`**: removes the script from all scene collections and deletes its files (Python and the OBS Python setting are left alone).
 
 ### Troubleshooting
-- *"install.ps1 was not found"*: you ran the .bat from inside the ZIP. Extract the ZIP first.
+- *"install.ps1 was not found"*: you ran the .bat from inside the ZIP, or not from the `windows` folder. Extract the ZIP first, then open **`windows`** and run the .bat from there.
 - The window says the tally device is found but not connected: on the base set **Switcher IP = this PC's IP** (shown in the window), not the base's own IP.
 - Anything else: send `%TEMP%\hollyland_tally_install.log` (Windows) or `~/Library/Logs/hollyland_tally_install.log` (macOS).
 
@@ -72,10 +77,10 @@ On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the co
 
 ## Install (macOS)
 1. On GitHub: **Code → Download ZIP**. Double-click the ZIP in Finder to extract it.
-2. Double-click **`Install Hollyland Tally.command`** in the extracted folder. A Terminal window opens and does the rest.
+2. Open the **`mac`** folder and double-click **`Install Hollyland Tally.command`**. A Terminal window opens and does the rest.
 
 The installer, no admin password needed:
-- Checks that it is running from the extracted folder (the two script files must sit next to it).
+- Checks that it is running from the extracted `mac` folder (the two script files are in the parent folder).
 - Finds OBS (`/Applications/OBS.app`, `~/Applications/OBS.app`, Steam, or Spotlight). Quits OBS if it is open and opens it again at the end. If OBS was never started on this Mac, it starts it once so OBS creates its settings, then quits it.
 - Finds the OBS scripts folder `~/Library/Application Support/obs-studio/scripts/` and copies `obs_hollyland_tally.py` and `tally_window.pyw` there (only these two files are replaced; your other scripts are not touched). If it cannot find the OBS settings folder, it asks you to choose a folder.
 - **Opens that folder in Finder** so you can see the copied files.
@@ -93,7 +98,7 @@ The installer, no admin password needed:
 - *"cannot be opened because it is from an unidentified developer"* / *"Apple could not verify…"*: right-click the file → **Open** → **Open**. On newer macOS: **System Settings → Privacy & Security → Open Anyway**.
 - *"you do not have appropriate access privileges"* (the ZIP lost the execute bit): open Terminal and run `chmod +x ` then drag the file into the Terminal window and press Return. Or type `bash ` (with a space), drag the file in, and press Return.
 
-**Uninstall:** double-click **`Uninstall Hollyland Tally.command`**: removes the script from all scene collections and deletes its two files (Python and the OBS Python setting are left alone).
+**Uninstall:** double-click **`mac/Uninstall Hollyland Tally.command`**: removes the script from all scene collections and deletes its two files (Python and the OBS Python setting are left alone).
 
 ### Manual install (macOS fallback)
 Copy `obs_hollyland_tally.py` and `tally_window.pyw` into the same folder (`~/Library/Application Support/obs-studio/scripts/` works), set OBS → Tools → Scripts → Python Settings to the folder that holds `Python.framework` for Python 3.11 (python.org: `/Library/Frameworks`, Homebrew: `/opt/homebrew/opt/python@3.11/Frameworks`), then add the script with **+**.
@@ -108,14 +113,14 @@ brew install python-tk@3.14
 
 ### ติดตั้งบน macOS (ภาษาไทย)
 1. กด **Code → Download ZIP** แล้วดับเบิลคลิกไฟล์ ZIP ใน Finder เพื่อแตกไฟล์
-2. ดับเบิลคลิก **`Install Hollyland Tally.command`** ในโฟลเดอร์ที่แตกออกมา จะมีหน้าต่าง Terminal เปิดขึ้นมาทำงานให้เอง
+2. เปิดโฟลเดอร์ **`mac`** แล้วดับเบิลคลิก **`Install Hollyland Tally.command`** จะมีหน้าต่าง Terminal เปิดขึ้นมาทำงานให้เอง
 3. ตัวติดตั้งจะหาโฟลเดอร์สคริปต์ของ OBS (`~/Library/Application Support/obs-studio/scripts/`) คัดลอกไฟล์ 2 ไฟล์ไปวาง แล้ว **เปิดโฟลเดอร์นั้นใน Finder** ให้เห็นไฟล์ ถ้าหาโฟลเดอร์ไม่เจอ จะให้เลือกโฟลเดอร์เอง
 4. ตัวติดตั้งหา Python ที่ OBS ใช้ได้ (3.11 ดีที่สุด, 3.12/3.10 ได้, **3.13 ขึ้นไป OBS ใช้ไม่ได้**) ตั้งค่า Python ใน OBS เพิ่มสคริปต์ในทุก scene collection (ค่าไฟเดิมยังอยู่) ถ้ามี OBS เปิดอยู่จะปิดให้ก่อนแล้วเปิดใหม่ตอนจบ ตอนจบจะแสดงสรุปสิ่งที่ทำไปแล้ว และ IP ของเครื่อง Mac นี้ไว้ใส่เป็น Switcher IP ที่ตัวฐาน (พอร์ต 8099) หน้าต่าง Terminal จะค้างไว้ให้อ่าน จนคุณปิดเอง
 5. หน้าต่างสถานะต้องใช้ Python ที่มี **Tk 8.6 ขึ้นไป** ถ้ามี Homebrew ตัวติดตั้งจะถามก่อนแล้วค่อยรัน `brew install` ให้ ถ้าไม่มี Homebrew จะไม่ติดตั้ง Homebrew ให้เอง แต่จะบอกขั้นตอน (ติดตั้ง Python 3.11 จาก python.org หรือติดตั้ง Homebrew แล้วรัน `brew install python@3.11 python-tk@3.11`) แล้วรันตัวติดตั้งอีกครั้ง
 6. ถ้า macOS ไม่ยอมเปิดไฟล์ ("unidentified developer"): คลิกขวาที่ไฟล์ → **Open** → **Open** หรือ System Settings → Privacy & Security → **Open Anyway**
 7. ถ้าขึ้นว่า "do not have appropriate access privileges": เปิด Terminal พิมพ์ `chmod +x ` แล้วลากไฟล์มาวางใน Terminal กด Return (หรือพิมพ์ `bash ` แล้วลากไฟล์มาวาง กด Return)
 8. ถ้า OBS ถามเรื่องรับการเชื่อมต่อจากเครือข่าย หรือหาอุปกรณ์ในเครือข่าย ให้กด **Allow**
-9. ถอนการติดตั้ง: ดับเบิลคลิก **`Uninstall Hollyland Tally.command`**
+9. ถอนการติดตั้ง: ดับเบิลคลิก **`mac/Uninstall Hollyland Tally.command`**
 10. ติดตั้งเองแบบเดิม: คัดลอก 2 ไฟล์ไปที่โฟลเดอร์ scripts ของ OBS ตั้ง Python Settings แล้วกด + เพิ่มสคริปต์ (ติดตั้ง `python-tk@3.14` ด้วย Homebrew — Python ของระบบเป็น Tk 8.5 จะเปิดหน้าต่างสถานะเป็นจอขาวว่าง)
 
 ## How it works (protocol notes)
@@ -136,10 +141,11 @@ On a scene change the script also pushes `TALLY OK …` and `ACTS OK InputPrevie
 |---|---|
 | `obs_hollyland_tally.py` | OBS script (vMix TCP emulator + tally logic) |
 | `tally_window.pyw` | Status window (tkinter), started by the script |
-| `Install Hollyland Tally.bat`, `install.ps1`, `add_to_obs.py` | Windows installer (`add_to_obs.py` is shared with macOS) |
-| `Uninstall Hollyland Tally.bat`, `uninstall.ps1` | Windows uninstaller |
-| `Install Hollyland Tally.command`, `install_mac.sh`, `add_to_obs.py` | macOS installer (double-click the .command) |
-| `Uninstall Hollyland Tally.command`, `uninstall_mac.sh` | macOS uninstaller |
+| `add_to_obs.py` | Shared helper used by both installers |
+| `windows/Install Hollyland Tally.bat`, `windows/install.ps1` | Windows installer (double-click the .bat) |
+| `windows/Uninstall Hollyland Tally.bat`, `windows/uninstall.ps1` | Windows uninstaller |
+| `mac/Install Hollyland Tally.command`, `mac/install_mac.sh` | macOS installer (double-click the .command) |
+| `mac/Uninstall Hollyland Tally.command`, `mac/uninstall_mac.sh` | macOS uninstaller |
 
 ## License
 MIT

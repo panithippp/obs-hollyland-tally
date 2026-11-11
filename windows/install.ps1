@@ -15,6 +15,15 @@ $PY_PREF = @("3.11", "3.12", "3.10", "3.9", "3.8")   # OBS 28-33 load Python 3.6
 $PORT    = 8099
 $log     = Join-Path $env:TEMP "hollyland_tally_install.log"
 $here    = Split-Path -Parent $MyInvocation.MyCommand.Path
+$root    = Split-Path -Parent $here
+# Installer files are in windows/; the OBS script files live in the repo root (parent folder).
+function Get-Src([string]$name) {
+  foreach ($d in @($here, $root)) {
+    $p = Join-Path $d $name
+    if (Test-Path -LiteralPath $p) { return $p }
+  }
+  return $null
+}
 $summary = [ordered]@{}
 $script:startedTranscript = $false
 
@@ -300,11 +309,13 @@ try {
   try { Start-Transcript -LiteralPath $log -Force | Out-Null; $script:startedTranscript = $true } catch {}
   Say "Hollyland Tally for OBS - installer" Cyan
   Say "Folder: $here"
+  Say "Scripts: $root"
   Say "Log:    $log"
   foreach ($f in @("obs_hollyland_tally.py", "tally_window.pyw", "add_to_obs.py")) {
-    if (-not (Test-Path -LiteralPath (Join-Path $here $f))) { throw "Missing file '$f'. Extract the whole ZIP first (right click > Extract All), then run the installer from the extracted folder." }
+    if (-not (Get-Src $f)) { throw "Missing file '$f'. Extract the whole ZIP first (right click > Extract All), then open the windows folder and run the installer from there." }
   }
   Get-ChildItem -LiteralPath $here -File | Unblock-File -ErrorAction SilentlyContinue
+  Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue
   if ($ListPython) {
     foreach ($d in (Find-PythonCandidates | ForEach-Object { $_.TrimEnd('\', '/') } | Sort-Object -Unique)) { $t = Test-Python $d; if ($t) { Say ("usable  {0}  tkinter={1}  {2}" -f $t.Ver, $t.Tk, $t.Dir) Green } elseif (Test-Path -LiteralPath (Join-Path $d "python.exe")) { Say "skipped $d (not 64-bit, no pythonw/DLL, or version OBS cannot load)" } }
     $b = Select-Python; Say "selected: $(if ($b) { "$($b.Ver) $($b.Dir)" } else { 'none' })" Cyan
@@ -375,8 +386,8 @@ try {
   Step "4/6 Copy the script and set OBS Python path"
   $dest = Join-Path $obsDir "scripts"
   New-Item -ItemType Directory -Force -Path $dest | Out-Null
-  Copy-Item -LiteralPath (Join-Path $here "obs_hollyland_tally.py") -Destination $dest -Force
-  Copy-Item -LiteralPath (Join-Path $here "tally_window.pyw") -Destination $dest -Force
+  Copy-Item -LiteralPath (Get-Src "obs_hollyland_tally.py") -Destination $dest -Force
+  Copy-Item -LiteralPath (Get-Src "tally_window.pyw") -Destination $dest -Force
   Say "Copied to $dest"
   $pyPath = $py.Dir -replace '\\', '/'
   $userIni = Join-Path $obsDir "user.ini"; $globalIni = Join-Path $obsDir "global.ini"
@@ -393,7 +404,7 @@ try {
 
   Step "5/6 Add the script to OBS (Tools > Scripts)"
   $ErrorActionPreference = "Continue"
-  & $pyExe (Join-Path $here "add_to_obs.py") 2>&1 | ForEach-Object { Say "$_" }
+  & $pyExe (Get-Src "add_to_obs.py") 2>&1 | ForEach-Object { Say "$_" }
   $added = ($LASTEXITCODE -eq 0)
   $ErrorActionPreference = "Stop"
   if (-not $added) { throw "Could not add the script to OBS (see messages above)." }

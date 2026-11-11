@@ -12,6 +12,13 @@ PY_PREF="3.11 3.12 3.10 3.9 3.8"          # OBS 28-33 load Python 3.6 - 3.12 (3.
 OBS_TRIES="3.12 3.11 3.10 3.9 3.8 3.7 3.6" # the order OBS itself tries inside one folder
 BUNDLE_ID="com.obsproject.obs-studio"
 HERE="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$HERE/.." && pwd)"
+# Installer files are in mac/; the OBS script files live in the repo root (parent folder).
+src() {  # $1 = filename. Prefer this folder, then the parent folder.
+  if [ -f "$HERE/$1" ]; then printf '%s\n' "$HERE/$1"
+  elif [ -f "$ROOT/$1" ]; then printf '%s\n' "$ROOT/$1"
+  fi
+}
 LOG="$HOME/Library/Logs/hollyland_tally_install.log"
 CFG="$HOME/Library/Application Support/obs-studio"
 
@@ -281,6 +288,7 @@ fail() {
 # ================= main =================
 say "${C_CYAN}Hollyland Tally for OBS - macOS installer${C_OFF}"
 say "Folder: $HERE"
+say "Scripts: $ROOT"
 say "Log:    $LOG"
 echo
 say "This installer does everything automatically. You do not need to paste files by hand."
@@ -293,7 +301,7 @@ say "  5. Open the scripts folder in Finder so you can see the files"
 say "  6. Show a summary and this Mac's IP for the Hollyland tally base"
 say "At the end this window stays open so you can read the summary, then close it yourself."
 for f in obs_hollyland_tally.py tally_window.pyw add_to_obs.py; do
-  [ -f "$HERE/$f" ] || fail "Missing file '$f' next to the installer. Extract the whole ZIP first (double-click it), then run 'Install Hollyland Tally.command' from the extracted folder."
+  [ -n "$(src "$f")" ] || fail "Missing file '$f'. Extract the whole ZIP first (double-click it), then open the mac folder and run 'Install Hollyland Tally.command' from there."
 done
 chmod +x "$HERE/"*.command 2>/dev/null   # in case the ZIP lost the execute bit (for the uninstaller later)
 [ "$(uname -s)" = Darwin ] || warn "This installer is for macOS (this system is $(uname -s))."
@@ -395,8 +403,9 @@ say "Scene collections: ${cols:-none}   (active: ${active:-?})"
 
 step "4/6 Copy the script and set OBS Python path"
 for f in obs_hollyland_tally.py tally_window.pyw; do
-  cp -f "$HERE/$f" "$DEST/$f" || fail "Could not copy $f to $DEST"
-  cmp -s "$HERE/$f" "$DEST/$f" || fail "Copy check failed for $DEST/$f"
+  s="$(src "$f")"
+  cp -f "$s" "$DEST/$f" || fail "Could not copy $f to $DEST"
+  cmp -s "$s" "$DEST/$f" || fail "Copy check failed for $DEST/$f"
   xattr -d com.apple.quarantine "$DEST/$f" >/dev/null 2>&1
 done
 COPIED=1
@@ -421,7 +430,7 @@ fi
 step "5/6 Add the script to OBS (Tools > Scripts)"
 added=0
 if [ -n "$PY_BIN" ] && [ "$DEST" = "$CFG/scripts" ] && [ "${ncols:-0}" -gt 0 ]; then
-  "$PY_BIN" "$HERE/add_to_obs.py" --obsdir "$CFG" && added=1
+  "$PY_BIN" "$(src add_to_obs.py)" --obsdir "$CFG" && added=1
 fi
 if [ $added = 1 ]; then
   sum "Script added to OBS" "OK ($ncols scene collection(s))"

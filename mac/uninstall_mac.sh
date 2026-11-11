@@ -6,6 +6,12 @@
 CFG="$HOME/Library/Application Support/obs-studio"
 BUNDLE_ID="com.obsproject.obs-studio"
 HERE="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$HERE/.." && pwd)"
+src() {
+  if [ -f "$HERE/$1" ]; then printf '%s\n' "$HERE/$1"
+  elif [ -f "$ROOT/$1" ]; then printf '%s\n' "$ROOT/$1"
+  fi
+}
 NO_OBS=0; NO_PAUSE=0; YES=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -75,8 +81,9 @@ fi
 if [ -z "$py" ] && xcode-select -p >/dev/null 2>&1 && [ -x /usr/bin/python3 ]; then py=/usr/bin/python3; fi
 
 removed=0
-if [ -n "$py" ] && [ -f "$HERE/add_to_obs.py" ] && ls "$CFG/basic/scenes/"*.json >/dev/null 2>&1; then
-  "$py" "$HERE/add_to_obs.py" --remove --obsdir "$CFG" && removed=1
+ADD="$(src add_to_obs.py)"
+if [ -n "$py" ] && [ -n "$ADD" ] && ls "$CFG/basic/scenes/"*.json >/dev/null 2>&1; then
+  "$py" "$ADD" --remove --obsdir "$CFG" && removed=1
 fi
 [ $removed = 1 ] || warn "Could not edit the OBS scene collections automatically. In OBS > Tools > Scripts, select obs_hollyland_tally.py and click '-'."
 

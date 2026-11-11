@@ -2,7 +2,7 @@
 setlocal
 title Hollyland Tally for OBS - Uninstall
 if not exist "%~dp0uninstall.ps1" (
-  echo  uninstall.ps1 was not found next to this file. Extract the whole ZIP first.
+  echo  uninstall.ps1 was not found next to this file. Extract the whole ZIP first, then open the windows folder.
   pause
   exit /b 1
 )

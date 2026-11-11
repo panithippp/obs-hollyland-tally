@@ -4,8 +4,8 @@ title Hollyland Tally for OBS - Installer
 if not exist "%~dp0install.ps1" (
   echo.
   echo  install.ps1 was not found next to this file.
-  echo  Extract the whole ZIP first: right click the ZIP ^> Extract All, then run
-  echo  "Install Hollyland Tally.bat" from the extracted folder.
+  echo  Extract the whole ZIP first: right click the ZIP ^> Extract All, then open
+  echo  the windows folder and run "Install Hollyland Tally.bat" from there.
   echo.
   pause
   exit /b 1

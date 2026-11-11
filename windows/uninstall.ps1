@@ -4,6 +4,14 @@
 param([switch]$NoObsControl, [switch]$NoPause, [switch]$Yes)
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$root = Split-Path -Parent $here
+function Get-Src([string]$name) {
+  foreach ($d in @($here, $root)) {
+    $p = Join-Path $d $name
+    if (Test-Path -LiteralPath $p) { return $p }
+  }
+  return $null
+}
 $PORT = 8099
 function Say($m, $c = "Gray") { Write-Host $m -ForegroundColor $c }
 function Pause-End { if (-not $NoPause) { Write-Host ""; [void](Read-Host "Press Enter to close") } }
@@ -42,9 +50,9 @@ try {
     }
   }
   $removed = $false
-  if ($py -and (Test-Path -LiteralPath (Join-Path $here "add_to_obs.py"))) {
+  if ($py -and (Get-Src "add_to_obs.py")) {
     $ErrorActionPreference = "Continue"
-    & $py (Join-Path $here "add_to_obs.py") --remove 2>&1 | ForEach-Object { Say "$_" }
+    & $py (Get-Src "add_to_obs.py") --remove 2>&1 | ForEach-Object { Say "$_" }
     $removed = ($LASTEXITCODE -eq 0)
     $ErrorActionPreference = "Stop"
   }
