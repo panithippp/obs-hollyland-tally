@@ -1,10 +1,40 @@
-# Hollyland Wireless Tally for OBS Studio
+# OBS Hollyland Tally – Hollyland Wireless Tally Lights for OBS Studio (no vMix)
 
-Light up a **Hollyland wireless tally system** (tested on a base with firmware S4.0.0.10, HW H000) from **OBS Studio** with no vMix needed. The OBS Python script pretends to be vMix's TCP API (port 8099), so the Hollyland base thinks it is talking to vMix.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/panithippp/obs-hollyland-tally)](https://github.com/panithippp/obs-hollyland-tally/releases)
+[![GitHub stars](https://img.shields.io/github/stars/panithippp/obs-hollyland-tally)](https://github.com/panithippp/obs-hollyland-tally/stargazers)
+[![Python](https://img.shields.io/badge/Python-3.8%20to%203.12-blue.svg)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey.svg)](#install)
+[![OBS Studio](https://img.shields.io/badge/OBS%20Studio-Python%20script-informational.svg)](https://obsproject.com/)
+
+This repository shows **how to connect Hollyland wireless tally to OBS Studio** without installing vMix. The OBS Python script provides **vMix TCP API emulation** on port 8099, so a Hollyland **tally light** base can talk to OBS Studio as if it were vMix. It was tested on a Hollyland base with firmware **S4.0.0.10**, HW **H000**.
 
 ใช้ไฟ Tally ไร้สายของ Hollyland กับ OBS Studio ได้โดยไม่ต้องมี vMix: สคริปต์ Python ของ OBS จำลอง vMix TCP API (พอร์ต 8099) ให้ตัวฐานคุยด้วย
 
-## What this script can do
+## Table of Contents
+
+- [Features](#features)
+- [Status window details](#status-window-details)
+- [สคริปต์ทำอะไรได้บ้าง](#สคริปต์ทำอะไรได้บ้าง)
+- [Supported hardware and software](#supported-hardware-and-software)
+- [Install](#install)
+- [Install (Windows)](#install-windows)
+- [ติดตั้ง (ภาษาไทย)](#ติดตั้ง-ภาษาไทย)
+- [Install (macOS)](#install-macos)
+- [ติดตั้งบน macOS (ภาษาไทย)](#ติดตั้งบน-macos-ภาษาไทย)
+- [Set up the Hollyland base](#set-up-the-hollyland-base)
+- [Usage](#usage)
+- [How it works (protocol notes)](#how-it-works-protocol-notes)
+- [หลักการทำงาน (บันทึกโปรโตคอล)](#หลักการทำงาน-บันทึกโปรโตคอล)
+- [Troubleshooting / FAQ](#troubleshooting--faq)
+- [Files](#files)
+- [Release notes](#release-notes)
+- [Contributing](#contributing)
+- [AI disclosure](#ai-disclosure)
+- [License](#license)
+
+## Features
+
 - Light up a Hollyland wireless tally system from OBS Studio, with no vMix.
 - Red = Program, green = Preview (Studio Mode), in real time. Lights update as soon as you switch a scene or source, not only on the next poll.
 - Map each tally light (1–16) to an OBS scene or a source. Until you choose, lights 1–4 follow your first scenes automatically.
@@ -17,10 +47,12 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 - MIT license.
 
 ### Status window details
+
 - Resize the window freely (drag the frame): the colour bars and all text scale with it. Text size: **A- / A+** in the window, keys **+ / -** (**0** = 100 %), or OBS → Tools → Scripts → *Status window text size*. Size, position and text size are remembered (`~/.hollyland_tally_window.json`).
 - Closing the status window (X) keeps it closed. To show it again: OBS → Tools → Scripts → **Open status window** (it also comes back when OBS restarts or the script is reloaded). If the window crashes, the script reopens it.
 
 ### สคริปต์ทำอะไรได้บ้าง
+
 - ใช้ไฟ Tally ไร้สายของ Hollyland กับ OBS ได้ โดยไม่ต้องมี vMix
 - แดง = Program, เขียว = Preview (Studio Mode) แบบเรียลไทม์ ไฟเปลี่ยนทันทีเมื่อสลับซีนหรือซอร์ส ไม่ต้องรอรอบโพลล์ถัดไป
 - จับคู่ไฟ 1–16 กับซีนหรือซอร์สใน OBS ได้ ถ้ายังไม่เลือกเอง ไฟ 1–4 จะตามซีนแรกโดยอัตโนมัติ
@@ -31,16 +63,37 @@ Light up a **Hollyland wireless tally system** (tested on a base with firmware S
 - สแกนหาตัวฐานในเครือข่าย และบอกว่าต้องตั้งอะไร หากเจอเครื่องแต่ยังไม่เชื่อมต่อ
 - มีตัวติดตั้งแบบดับเบิลคลิกในโฟลเดอร์ `windows` (`1. Click to Install.bat`) หรือโฟลเดอร์ `mac` (`1. Click to Install.command`)
 
+## หน้าต่างสถานะ (Status window) — ภาษาไทย
+
+- ลากขอบหน้าต่างเพื่อย่อ/ขยาย แถบสีและตัวอักษรจะปรับขนาดตามอัตโนมัติ
+- ปรับขนาดตัวอักษร: ปุ่ม **A- / A+** ในหน้าต่าง, คีย์ **+ / -** (**0** = 100%) หรือ OBS → Tools → Scripts → *ขนาดตัวอักษร % (Status window text size)* — จำขนาด/ตำแหน่งหน้าต่างไว้ให้ครั้งต่อไป
+- กด X ปิดแล้วจะไม่เด้งขึ้นมาอีก ถ้าต้องการเปิดใหม่: OBS → Tools → Scripts → **เปิดหน้าต่างสถานะ (Open status window)** (เปิด OBS ใหม่ หรือ reload สคริปต์ ก็จะกลับมาเอง)
+
+## Supported hardware and software
+
+Only what this repository states or implements:
+
+- **Hollyland wireless tally system** (base + lights). Tested on a base with firmware **S4.0.0.10**, HW **H000**. The script talks to the **base** over the network. Individual lights talk to the base by radio, so OBS cannot detect whether a specific light is on.
+- **OBS Studio**, loaded as a Python script from **Tools → Scripts**. This repo does not list a tested OBS version number. Comments in the Windows and macOS installers note that **OBS 28–33 load Python 3.6–3.12**, that **3.13+ is not supported by OBS**, and that **OBS 31+** stores the Python path in `user.ini` (older OBS uses `global.ini`).
+- **Python for OBS** must be **64-bit**. **3.11 is preferred**; **3.12** and **3.10** are OK. The installers also accept **3.9** and **3.8**. **3.13+ is not supported by OBS**. On Windows, if no usable Python is found, the installer can download **Python 3.11.9** from python.org (with tkinter for the status window) and falls back to `winget`.
+- **Status window:** tkinter. On macOS it needs **Tk 8.6 or newer**. Apple's Command Line Tools Python (Tk 8.5) can import tkinter, but on current macOS it may open a **blank white window**. **Python 3.14 is fine for the status window only**; OBS itself needs 3.12 or older.
+- **Windows** and **macOS**, with double-click installers in [`windows/`](windows/) and [`mac/`](mac/). There is no Linux installer in this repository.
+- **No vMix required.** The script emulates the vMix TCP API (default port **8099**). The XML it reports uses version string `27.0.0.49` and edition `4K` only as part of that emulation.
+
 ## Install
+
 After you extract the GitHub ZIP:
+
 - **Windows:** open the **`windows`** folder and double-click **`1. Click to Install.bat`**
 - **macOS:** open the **`mac`** folder and double-click **`1. Click to Install.command`**
 
 ## Install (Windows)
+
 1. On GitHub: **Code → Download ZIP**. Right click the ZIP → **Extract All**.
 2. Open the **`windows`** folder and double-click **`1. Click to Install.bat`**. That's all.
 
 The installer does everything by itself, no admin needed:
+
 - Finds OBS Studio (registry or the usual folders). If OBS is not installed it tells you.
 - Finds a 64-bit Python that OBS can use (3.11 preferred, 3.12/3.10 OK; 3.13+ is not supported by OBS) via the registry, `py -0p` and the usual folders. If there is none, it downloads **Python 3.11.9 from python.org**, checks its signature and installs it for your user only (with tkinter for the status window). Falls back to `winget`.
 - Closes OBS if it is open (and opens it again at the end). If OBS was never started on this PC, it starts it once so OBS creates its settings, then closes it.
@@ -54,32 +107,31 @@ Out of the box, **lights 1, 2, 3, 4 follow your first 4 OBS scenes** (scene list
 **New OBS with fewer scenes than lights?** (a fresh OBS has only "Scene") The script then creates the missing scenes once, named **Camera 2, Camera 3, Camera 4** (so a fresh OBS ends up with Scene, Camera 2, Camera 3, Camera 4 = lights 1–4), and saves them. It never deletes or renames scenes, skips names that already exist, and does nothing if you have chosen any light yourself or turned auto-map off. Put each camera into its scene and you're ready.
 
 ### ติดตั้ง (ภาษาไทย)
+
 1. กด **Code → Download ZIP** แล้วคลิกขวาที่ไฟล์ ZIP → **Extract All**
 2. เปิดโฟลเดอร์ **`windows`** แล้วดับเบิลคลิก **`1. Click to Install.bat`** จบแค่นี้ ตัวติดตั้งหา OBS/Python เอง ถ้าไม่มี Python จะโหลด Python 3.11 จาก python.org มาติดตั้งให้ ตั้งค่า Python ใน OBS เพิ่มสคริปต์ เช็กไฟร์วอลล์ แล้วเปิด OBS ให้ ตอนจบจะบอก IP ของเครื่องนี้ไว้ใส่เป็น Switcher IP ที่ตัวฐาน
 3. ตอนแรกไฟ 1–4 จะตาม Scene 4 อันแรกใน OBS อัตโนมัติ เปลี่ยนเองได้ที่ Tools → Scripts
 4. ถ้าเพิ่งลง OBS ใหม่และยังมี Scene ไม่ถึง 4 อัน (OBS ใหม่มีแค่ "Scene") สคริปต์จะสร้าง Scene ที่ขาดให้เองครั้งเดียว ชื่อ **Camera 2, Camera 3, Camera 4** แล้วบันทึกไว้ ไม่ลบหรือเปลี่ยนชื่อ Scene เดิม และจะไม่สร้างถ้าคุณเลือกไฟเองแล้วหรือปิด auto-map ไว้ จากนั้นใส่กล้องลงในแต่ละ Scene ได้เลย
 
 ### Uninstall
+
 Double-click **`windows/2. Uninstall.bat`**: removes the script from all scene collections and deletes its files (Python and the OBS Python setting are left alone).
 
 ### Troubleshooting
+
 - *"install.ps1 was not found"*: you ran the .bat from inside the ZIP, or not from the `windows` folder. Extract the ZIP first, then open **`windows`** and run the .bat from there.
 - The window says the tally device is found but not connected: on the base set **Switcher IP = this PC's IP** (shown in the window), not the base's own IP.
 - Anything else: send `%TEMP%\hollyland_tally_install.log` (Windows) or `~/Library/Logs/hollyland_tally_install.log` (macOS).
 
-## หน้าต่างสถานะ (Status window) — ภาษาไทย
-- ลากขอบหน้าต่างเพื่อย่อ/ขยาย แถบสีและตัวอักษรจะปรับขนาดตามอัตโนมัติ
-- ปรับขนาดตัวอักษร: ปุ่ม **A- / A+** ในหน้าต่าง, คีย์ **+ / -** (**0** = 100%) หรือ OBS → Tools → Scripts → *ขนาดตัวอักษร % (Status window text size)* — จำขนาด/ตำแหน่งหน้าต่างไว้ให้ครั้งต่อไป
-- กด X ปิดแล้วจะไม่เด้งขึ้นมาอีก ถ้าต้องการเปิดใหม่: OBS → Tools → Scripts → **เปิดหน้าต่างสถานะ (Open status window)** (เปิด OBS ใหม่ หรือ reload สคริปต์ ก็จะกลับมาเอง)
-
-## Set up the tally base
-On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the computer running OBS** (shown in the status window), **port 8099**. Do not enter the base's own IP. Both must be on the same network.
+More questions (lights not changing, firewall port 8099, Python not set in OBS, Studio Mode preview green) are in [Troubleshooting / FAQ](#troubleshooting--faq).
 
 ## Install (macOS)
+
 1. On GitHub: **Code → Download ZIP**. Double-click the ZIP in Finder to extract it.
 2. Open the **`mac`** folder and double-click **`1. Click to Install.command`**. A Terminal window opens and does the rest.
 
 The installer, no admin password needed:
+
 - Checks that it is running from the extracted `mac` folder (the two script files are in the parent folder).
 - Finds OBS (`/Applications/OBS.app`, `~/Applications/OBS.app`, Steam, or Spotlight). Quits OBS if it is open and opens it again at the end. If OBS was never started on this Mac, it starts it once so OBS creates its settings, then quits it.
 - Finds the OBS scripts folder `~/Library/Application Support/obs-studio/scripts/` and copies `obs_hollyland_tally.py` and `tally_window.pyw` there (only these two files are replaced; your other scripts are not touched). If it cannot find the OBS settings folder, it asks you to choose a folder.
@@ -95,12 +147,14 @@ The installer, no admin password needed:
 **macOS firewall:** the installer does not change it. If OBS asks to accept incoming network connections, click **Allow** (the base connects to this Mac on TCP 8099). If macOS asks whether OBS may find devices on your local network, click **Allow**.
 
 **If macOS will not open the file:**
+
 - *"cannot be opened because it is from an unidentified developer"* / *"Apple could not verify…"*: right-click the file → **Open** → **Open**. On newer macOS: **System Settings → Privacy & Security → Open Anyway**.
 - *"you do not have appropriate access privileges"* (the ZIP lost the execute bit): open Terminal and run `chmod +x ` then drag the file into the Terminal window and press Return. Or type `bash ` (with a space), drag the file in, and press Return.
 
 **Uninstall:** double-click **`mac/2. Uninstall.command`**: removes the script from all scene collections and deletes its two files (Python and the OBS Python setting are left alone).
 
 ### Manual install (macOS fallback)
+
 Copy `obs_hollyland_tally.py` and `tally_window.pyw` into the same folder (`~/Library/Application Support/obs-studio/scripts/` works), set OBS → Tools → Scripts → Python Settings to the folder that holds `Python.framework` for Python 3.11 (python.org: `/Library/Frameworks`, Homebrew: `/opt/homebrew/opt/python@3.11/Frameworks`), then add the script with **+**.
 
 The status window needs a Python with **Tk 8.6 or newer**. Apple's Command Line Tools Python (Tk 8.5) can import tkinter, but on current macOS it opens a **blank white window**. Install Homebrew Tk and the script will find it automatically:
@@ -112,6 +166,7 @@ brew install python-tk@3.14
 (Python 3.14 is fine for the status window only. OBS itself needs 3.12 or older.)
 
 ### ติดตั้งบน macOS (ภาษาไทย)
+
 1. กด **Code → Download ZIP** แล้วดับเบิลคลิกไฟล์ ZIP ใน Finder เพื่อแตกไฟล์
 2. เปิดโฟลเดอร์ **`mac`** แล้วดับเบิลคลิก **`1. Click to Install.command`** จะมีหน้าต่าง Terminal เปิดขึ้นมาทำงานให้เอง
 3. ตัวติดตั้งจะหาโฟลเดอร์สคริปต์ของ OBS (`~/Library/Application Support/obs-studio/scripts/`) คัดลอกไฟล์ 2 ไฟล์ไปวาง แล้ว **เปิดโฟลเดอร์นั้นใน Finder** ให้เห็นไฟล์ ถ้าหาโฟลเดอร์ไม่เจอ จะให้เลือกโฟลเดอร์เอง
@@ -123,71 +178,162 @@ brew install python-tk@3.14
 9. ถอนการติดตั้ง: ดับเบิลคลิก **`mac/2. Uninstall.command`**
 10. ติดตั้งเองแบบเดิม: คัดลอก 2 ไฟล์ไปที่โฟลเดอร์ scripts ของ OBS ตั้ง Python Settings แล้วกด + เพิ่มสคริปต์ (ติดตั้ง `python-tk@3.14` ด้วย Homebrew — Python ของระบบเป็น Tk 8.5 จะเปิดหน้าต่างสถานะเป็นจอขาวว่าง)
 
+## Set up the Hollyland base
+
+On the Hollyland base, set **Switcher = vMix**, **Switcher IP = the IP of the computer running OBS** (shown in the status window), **port 8099**. Do not enter the base's own IP. Both must be on the same network.
+
+The script's built-in setup guide (OBS → Tools → Scripts) also lists these steps:
+
+1. Connect a LAN (Ethernet) cable from the base to the same router or switch as the computer running OBS.
+2. On the base, set Switcher mode to **vMix**.
+3. Set **Switcher IP** to this computer's IP and **Port** to **8099** (the status window shows both).
+4. Pair each tally light with the base by connecting a USB-C cable between the light and the base.
+5. Set the channel knob on each light to the number mapped in the script.
+6. Switch a scene in OBS and watch the lights — red = Program, green = Preview.
+
+### ตั้งค่าตัวฐาน Hollyland
+
+ที่ตัวฐานตั้ง **Switcher = vMix**, **Switcher IP = IP ของคอมพิวเตอร์ที่รัน OBS** (แสดงในหน้าต่างสถานะ) **พอร์ต 8099** อย่าใส่ IP ของตัวฐานเอง ทั้งสองเครื่องต้องอยู่ในเครือข่ายเดียวกัน ต่อสาย LAN จากตัวฐานเข้าเราเตอร์/สวิตช์วงเดียวกับคอมพิวเตอร์ที่รัน OBS จับคู่ไฟกับตัวฐานด้วยสาย USB-C แล้วหมุนปุ่มช่องของแต่ละดวงให้ตรงเบอร์ที่จับคู่ในสคริปต์
+
+## Usage
+
+1. After install, open OBS Studio. The script is added to every scene collection, and the status window opens when the script loads.
+2. Out of the box, lights 1–4 follow your first four OBS scenes (scene-list order). To choose yourself: **OBS → Tools → Scripts → obs_hollyland_tally.py**. Your choice always wins.
+3. In the script settings you can:
+   - Turn **auto-map** on or off (if no light is chosen and auto-map is on, lights follow the first scenes).
+   - Set how many lights you use (1–16; default 4).
+   - Map each light to an OBS **scene** or **source**.
+   - Turn **green Preview in Studio Mode** on or off (on by default).
+   - Run **Test lights**, or leave **Auto test on connect** enabled (default). Auto test is skipped while OBS is streaming or recording. The test walks each mapped light: red, then green, three rounds, one second per colour, then returns to the real tally.
+   - **Refresh** the base status, change **Status window text size**, and **Open status window**.
+   - Under **Advanced**, change the TCP **port** (default 8099, the vMix port) and how many inputs are reported (1–16; default 16).
+4. After OBS starts or you reload the script, connection checks run every 5 seconds, four times, then every 60 seconds. Those checks only ask whether the base is still connected. They do not drive the lights.
+5. Switch scenes (or use Cut / Transition). Red follows Program in real time. Green Preview needs Studio Mode.
+
 ## How it works (protocol notes)
+
 The Hollyland base does **not** send `SUBSCRIBE TALLY`. It polls about once per second with:
+
 ```
 TALLY
 ACTS Overlay1 … ACTS Overlay4
 ACTS InputPreview
 ```
+
 It needs:
+
 - `TALLY OK <digits>` (0 = off, 1 = program, 2 = preview per input)
 - `ACTS OK <name> <n>`; for `InputPreview`, `n` = the preview input number. **Green only lights when both TALLY digit 2 and InputPreview agree**, so only one light can be green at a time.
 
 On a scene change the script also pushes `TALLY OK …` and `ACTS OK InputPreview n` immediately, so the lights do not wait for the next poll.
 
 ### Example: Camera 1 is Program, Camera 2 is Preview
+
 Assume Studio Mode is on, and light 1 is mapped to Camera 1 and light 2 to Camera 2.
 
 **First check (when OBS starts or the script loads):** the script reads whatever is already Program and Preview. You do not have to click anything first. When the base connects and asks `TALLY` / `ACTS InputPreview`, or as soon as a change is pushed, the lights match that current state. In this example the script sends:
+
 ```
 TALLY OK 1200000000000000
 ACTS OK InputPreview 2
 ```
+
 Light 1 is red (Program), light 2 is green (Preview), and the other lights stay off. The 5-second connection checks (four times after start or reload, then every 60 seconds) only ask whether the base is still connected. They do not drive the lights.
 
 **When you click Cut or Transition:** OBS swaps the scenes — Camera 2 becomes Program and Camera 1 becomes Preview. The script sees that change immediately and pushes:
+
 ```
 TALLY OK 2100000000000000
 ACTS OK InputPreview 1
 ```
+
 Light 2 turns red and light 1 turns green. A slower Transition follows when OBS updates Program and Preview, usually as the transition starts.
 
 Green Preview needs Studio Mode. Light numbers follow the mapping in the script (or auto-map, which is scene-list order).
 
 ### หลักการทำงาน (บันทึกโปรโตคอล)
+
 ตัวฐาน Hollyland **ไม่ได้** ส่ง `SUBSCRIBE TALLY` แต่โพลล์ประมาณวินาทีละครั้งด้วย:
+
 ```
 TALLY
 ACTS Overlay1 … ACTS Overlay4
 ACTS InputPreview
 ```
+
 สิ่งที่ต้องตอบกลับ:
+
 - `TALLY OK <digits>` (0 = ดับ, 1 = program, 2 = preview ตามแต่ละช่อง)
 - `ACTS OK <name> <n>`; สำหรับ `InputPreview`, `n` = หมายเลขอินพุตที่เป็น Preview **ไฟเขียวติดเมื่อทั้งหลัก TALLY เป็น 2 และ InputPreview ชี้ช่องเดียวกัน** ดังนั้นไฟเขียวได้ครั้งละดวงเดียว
 
 เมื่อซีนเปลี่ยน สคริปต์จะส่ง `TALLY OK …` และ `ACTS OK InputPreview n` ทันที ไฟจึงไม่ต้องรอรอบโพลล์ถัดไป
 
 ### ตัวอย่าง: กล้อง 1 เป็น Program, กล้อง 2 เป็น Preview
+
 สมมติว่าเปิด Studio Mode อยู่ และไฟ 1 จับคู่กับ Camera 1, ไฟ 2 จับคู่กับ Camera 2
 
 **ครั้งแรก (ตอนเปิด OBS หรือโหลดสคริปต์):** สคริปต์อ่านค่า Program และ Preview ที่มีอยู่แล้ว ไม่ต้องกดอะไรก่อน เมื่อตัวฐานเชื่อมต่อแล้วถาม `TALLY` / `ACTS InputPreview` หรือเมื่อสคริปต์ส่งค่าไปเอง ไฟจะตรงกับสถานะตอนนั้น ในตัวอย่างนี้สคริปต์ส่ง:
+
 ```
 TALLY OK 1200000000000000
 ACTS OK InputPreview 2
 ```
+
 ไฟ 1 แดง (Program), ไฟ 2 เขียว (Preview) ไฟดวงอื่นดับ การเช็กทุก 5 วินาที (4 ครั้งหลังเปิดหรือรีโหลด แล้วค่อยทุก 60 วินาที) เป็นการเช็กแค่ว่าตัวฐานยังเชื่อมต่ออยู่ ไม่ได้สั่งสีไฟ
 
 **เมื่อกด Cut หรือ Transition:** OBS สลับซีน Camera 2 ขึ้นเป็น Program และ Camera 1 เป็น Preview สคริปต์เห็นการเปลี่ยนแปลงทันทีแล้วส่ง:
+
 ```
 TALLY OK 2100000000000000
 ACTS OK InputPreview 1
 ```
+
 ไฟ 2 เปลี่ยนเป็นแดง ไฟ 1 เปลี่ยนเป็นเขียว ถ้าใช้ Transition แบบมีเวลา ไฟจะตามตอนที่ OBS อัปเดต Program และ Preview ซึ่งมักเป็นตอนเริ่มทรานซิชัน
 
 ไฟเขียวของ Preview ต้องเปิด Studio Mode หมายเลขไฟตามการจับคู่ในสคริปต์ (หรือ auto-map ตามลำดับซีนในลิสต์)
 
+## Troubleshooting / FAQ
+
+These answers follow the real behaviour of the script, the status window, and the installers. OBS can only see the **base**, not each radio light.
+
+### Why are my Hollyland tally lights not changing?
+
+- In the status window, the base should show **CONNECTED**. If it shows **NOT FOUND** or **found but NOT connected**, fix the Switcher IP first (see the next question).
+- Confirm each light is mapped in **OBS → Tools → Scripts → obs_hollyland_tally.py**. If nothing is mapped, the status window says to pick a scene for each light.
+- Pair each light to the base (USB-C) and set its channel knob to the mapped number. The script cannot tell you whether an individual light is on.
+- Connection checks (every 5 seconds four times after start or reload, then every 60 seconds) only test whether the base is still connected. They do not set the colours.
+- If a light test is running, the real Program/Preview tally is held until the test finishes or is cancelled.
+- Watch the OBS script log (Tools → Scripts → Script Log) for `[Tally]` lines, including `เปิด port … ไม่ได้` if the TCP port could not be opened.
+
+### The status window says the tally device is found but not connected, or the base cannot find the PC
+
+The window text is: *Tally device found at &lt;ip&gt;, but it is NOT connected to receive commands*.
+
+On the base set **Switcher IP = this PC's IP** (shown in the window as **OBS IP**), **not** the base's own IP, and **Port = 8099**. Both must be on the same network, with a LAN cable from the base to the same router or switch as the OBS computer. The window auto-scans the LAN and shows this guide when it finds the base but the base is not connected to receive commands.
+
+### Firewall is blocking port 8099
+
+The Hollyland base connects **to the OBS computer** on TCP **8099** (unless you changed the port in Advanced).
+
+- **Windows:** the installer checks Windows Firewall for incoming TCP 8099 to OBS. Only if a rule is missing or blocking, Windows asks once (UAC) to add *Hollyland Tally (OBS TCP 8099)*. If you say No, or the base still cannot connect: when OBS starts and Windows asks "Allow access", tick **Private** and **Public** and click **Allow**. Or: **Windows Security → Firewall → Allow an app → obs64** and tick Private and Public (needs admin).
+- **macOS:** the installer does not change the firewall. If OBS asks to accept incoming network connections, click **Allow**. If macOS asks whether OBS may find devices on your local network, click **Allow**.
+
+### Python is not set in OBS, or the script will not load
+
+OBS needs a **64-bit** Python that it can load (**3.11 preferred**, 3.12/3.10 OK; the installers also accept 3.9 and 3.8; **3.13+ is not supported by OBS**).
+
+- The installers set **Tools → Scripts → Python Settings** for you (`[Python] Path64bit` in `user.ini`, and `global.ini` for older OBS). On macOS, that path is the folder that holds `Python.framework`.
+- If the script still does not load, open **OBS → Tools → Scripts → Python Settings** and choose that folder yourself, then add `obs_hollyland_tally.py` with **+**.
+- On macOS, a **blank white** status window usually means Tk 8.5 (Apple's Command Line Tools Python). Install Homebrew Tk (`brew install python-tk@3.14` is fine for the window only) and let the script find it, or use Python 3.11 from python.org, which includes Tk 8.6.
+- Install logs: `%TEMP%\hollyland_tally_install.log` (Windows) or `~/Library/Logs/hollyland_tally_install.log` (macOS).
+- *"install.ps1 was not found"*: you ran the `.bat` from inside the ZIP, or not from the `windows` folder. Extract the ZIP first, then open **`windows`** and run the `.bat` from there.
+
+### Preview is not green / Studio Mode preview green does not work
+
+Green Preview **needs Studio Mode**. In the script, **ไฟเขียวตาม Preview ใน Studio Mode** (green follows Preview in Studio Mode) is on by default; turn it off if you do not want Preview lights. The Hollyland base only turns a light green when both the TALLY digit is 2 and `ACTS InputPreview` points at the same input, so **only one light can be green at a time**. If Studio Mode is off, only Program (red) is driven.
+
 ## Files
+
 | File | Purpose |
 |---|---|
 | `obs_hollyland_tally.py` | OBS script (vMix TCP emulator + tally logic) |
@@ -198,5 +344,20 @@ ACTS OK InputPreview 1
 | `mac/1. Click to Install.command`, `mac/helpers/install_mac.sh` | macOS installer (double-click the .command) |
 | `mac/2. Uninstall.command`, `mac/helpers/uninstall_mac.sh` | macOS uninstaller |
 
+## Release notes
+
+See [GitHub Releases](https://github.com/panithippp/obs-hollyland-tally/releases) for tagged versions, starting with **v1.1.0**.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report issues and open pull requests.
+
+## AI disclosure
+
+Most of the code was written with the help of an AI coding assistant and tested on a real Hollyland tally system.
+
+**Not affiliated with or endorsed by the OBS Project or Hollyland**.
+
 ## License
-MIT
+
+[MIT](LICENSE)
